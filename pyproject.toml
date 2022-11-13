@@ -3,7 +3,13 @@ name = "v2conf"
 version = "0.0.1"
 description = "V2Conf helps you build V2Ray Config file automatically and evaluate and change config rules based on outbounds performances."
 authors = ["Mahyar Mahdavi <Mahyar@Mahyar24.com>"]
-license = "GPLv3"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/Mahyar24/V2Conf"
+keywords = [
+    "V2Ray",
+    "V2Fly",
+    "X2Ray"
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -17,6 +23,9 @@ black = "^22.10.0"
 isort = "^5.10.1"
 pylint = "^2.15.5"
 types-requests = "^2.28.11"
+
+[tool.poetry.scripts]
+viddur = "v2conf.__main__:entry_point"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
