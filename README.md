@@ -3,8 +3,6 @@
 V2Conf helps you build V2Ray Config file automatically and evaluate and change config rules based on outbounds performances.
 ## Installation
 
-First, you need to install "FFprobe". Then, use the package manager [pip](https://pip.pypa.io/en/stable/) to install viddur.
-
 ```bash
 sudo apt-get install pipx && pipx install v2conf;
 ```
