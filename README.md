@@ -1,10 +1,11 @@
 # V2Conf
 
 V2Conf helps you build V2Ray Config file automatically and evaluate and change config rules based on outbounds performances.
-## Installation
+## Installation & Running
 
 ```bash
 sudo apt-get install pipx && pipx install v2conf;
+sudo ./$(which v2conf) /home/ubuntu/confs -n 20 --jalali --log-file /home/ubuntu/v2conf.log 
 ```
 
 ## Details
@@ -12,16 +13,16 @@ sudo apt-get install pipx && pipx install v2conf;
 V2Conf expects a directory with this structure from you:
 ```bash
 confs/
-├── inbounds  # an "inbound" directory
+├── inbounds  # an "inbounds" directory
 │   └── main_entry.json
-├── outbounds  # an "outbound" directory
+├── outbounds  # an "outbounds" directory
 │   ├── blocked.json
 │   ├── direct.json
 │   ├── trojan_h2.json
 │   ├── trojan_ws_cloudflare.json
 │   ├── vless_h2.json
 │   └── vless_ws_cloudflare.json
-└── rules  # a "rule" directory
+└── rules  # a "rules" directory
     ├── ir.json
     └── private.json
 ```
