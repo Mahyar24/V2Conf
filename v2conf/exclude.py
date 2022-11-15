@@ -25,11 +25,7 @@ def get_ips(country_code: str, logger: logging.Logger) -> list[str]:
     for _ in range(5):
         try:
             data = requests.get(link, timeout=20).json()
-        except (
-            requests.exceptions.ConnectionError,
-            requests.exceptions.Timeout,
-        ):
-            # raise ConnectionError(f"Failed to connect to {link}") from err
+        except requests.exceptions.RequestException:
             pass
         else:
             return data["data"]["resources"]["ipv4"]

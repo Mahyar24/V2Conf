@@ -4,8 +4,8 @@ V2Conf helps you build V2Ray Config file automatically and evaluate and change c
 ## Installation & Running
 
 ```bash
-sudo apt-get install pipx && pipx install v2conf;
-sudo ./$(which v2conf) /home/ubuntu/confs -n 20 --jalali --log-file /home/ubuntu/v2conf.log 
+sudo apt-get install pipx && pipx install --python python3.10 v2conf;
+sudo ./$(which v2conf) /home/ubuntu/confs -n 10 --no-geoip --jalali --log-file /home/ubuntu/v2conf.log 
 ```
 
 ## Details
@@ -36,11 +36,11 @@ e.g. `main_entry.json`:
     "clients":
     ...
 ```
-and **all files must have a tag!**
+and **all configs must have a tag!**
 
 
 ## Usage
-```bash
+```
 $ v2conf --help
 usage: __main__.py [-h] [-c CONFIG_FILE] [--country-code COUNTRY_CODE] [-t TIMEOUT] [-w WEBSITE] [-n NUM_OF_TRIES] [-s SLEEP_TIME]
                    [-l {debug,info,warning,error,none}] [-q | --log-file LOG_FILE] [--jalali] [-v]

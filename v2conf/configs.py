@@ -78,9 +78,9 @@ def read_inbounds(path: Path) -> dict[str, dict]:
             except KeyError as err:
                 raise KeyError(f"Tag not found in {config.name}") from err
             else:
-                if data["tag"].startswith("inbound-test-http-"):
+                if data["tag"].startswith("inbound-http-test-"):
                     raise ValueError(
-                        f"'inbound-test-http-*' is reserved for internal use. "
+                        f"'inbound-http-test-*' is reserved for internal use. "
                         f"change the tag in {config.name}"
                     )
 
@@ -169,7 +169,7 @@ def make_rules(
         rules.append(
             {
                 "inboundTag": [http_inbound["tag"]],
-                "outboundTag": http_inbound["tag"].split("-")[1],
+                "outboundTag": http_inbound["tag"].removeprefix("inbound-http-test-"),
                 "type": "field",
             }
         )

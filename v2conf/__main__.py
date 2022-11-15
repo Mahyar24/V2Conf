@@ -28,7 +28,7 @@ from zoneinfo import ZoneInfo
 from .configs import make_conf, write_conf
 from .health import rank_outbounds
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 __author__ = "Mahyar Mahdavi"
 __email__ = "Mahyar@Mahyar24.com"
 __license__ = "GPLv3"
@@ -254,6 +254,7 @@ def main() -> None:
     """
     Main function.
     """
+    check_requirements()
 
     args = parsing_args()
     logger = make_logger(args)
@@ -297,5 +298,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    check_requirements()
     main()
