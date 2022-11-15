@@ -4,8 +4,8 @@ V2Conf helps you build V2Ray Config file automatically and evaluate and change c
 ## Installation & Running
 
 ```bash
-sudo apt-get install pipx && pipx install --python python3.10 v2conf;
-sudo ./$(which v2conf) /home/ubuntu/confs -n 10 --no-geoip --jalali --log-file /home/ubuntu/v2conf.log 
+sudo apt-get install pipx && pipx install --python python3.9 v2conf;
+sudo $(which v2conf) /home/ubuntu/confs -n 10 --no-geoip --country-code 'IR' --jalali --log-file /home/ubuntu/v2conf.log 
 ```
 
 ## Details

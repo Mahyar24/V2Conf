@@ -69,6 +69,9 @@ def read_inbounds(path: Path) -> dict[str, dict]:
     """
     inbounds_path = path / "inbounds"
 
+    if not inbounds_path.is_dir():
+        raise ValueError("Inbounds directory not found!")
+
     inbounds = {}
     for config in inbounds_path.glob("*.json"):
         with open(config, "r", encoding="utf-8") as file:
@@ -83,6 +86,9 @@ def read_inbounds(path: Path) -> dict[str, dict]:
                         f"'inbound-http-test-*' is reserved for internal use. "
                         f"change the tag in {config.name}"
                     )
+
+    if len(inbounds) < 1:
+        raise ValueError("No inbound config found!")
 
     return inbounds
 
@@ -203,6 +209,11 @@ def make_conf(
     vpn_outbounds = [
         k for k, v in outbounds.items() if v["protocol"] not in ("freedom", "blackhole")
     ]
+    if len(vpn_outbounds) < 2:
+        raise ValueError(
+            "At least two non-freedom/non-blackhole outbounds are required!"
+        )
+
     logger.info(f"Read {len(outbounds)} outbounds, {len(vpn_outbounds)} vpn outbounds")
 
     # find tag of freedom outbound, using when making first naive config file.

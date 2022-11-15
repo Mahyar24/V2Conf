@@ -28,7 +28,7 @@ from zoneinfo import ZoneInfo
 from .configs import make_conf, write_conf
 from .health import rank_outbounds
 
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 __author__ = "Mahyar Mahdavi"
 __email__ = "Mahyar@Mahyar24.com"
 __license__ = "GPLv3"
@@ -122,6 +122,10 @@ def checking_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
     args = parser.parse_args()
     if not validate_url(args.website):
         parser.error("The website you entered is not a valid URL.")
+    if not args.path_conf_dir.is_dir():
+        parser.error(
+            f"The directory you entered {args.path_conf_dir!r} is not a valid directory."
+        )
     return args
 
 

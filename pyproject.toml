@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "v2conf"
-version = "0.0.3"
+version = "0.0.4"
 description = "V2Conf helps you build V2Ray Config file automatically and evaluate and change config rules based on outbounds performances."
 authors = ["Mahyar Mahdavi <Mahyar@Mahyar24.com>"]
 license = "GPL-3.0-or-later"
