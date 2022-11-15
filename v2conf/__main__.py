@@ -18,7 +18,6 @@ import asyncio
 import logging
 import os
 import re
-import shutil
 import subprocess
 import textwrap
 import time
@@ -29,17 +28,18 @@ from zoneinfo import ZoneInfo
 from .configs import make_conf, write_conf
 from .health import rank_outbounds
 
-__VERSION__ = "0.0.1"
+__version__ = "0.0.2"
+__author__ = "Mahyar Mahdavi"
+__email__ = "Mahyar@Mahyar24.com"
+__license__ = "GPLv3"
+__url__ = "https://GitHub.com/Mahyar24/V2Conf"
+__pypi__ = "https://PyPI.org/project/V2Conf"
 
 
 def check_requirements() -> None:
     """
-    This function check if "v2ray" is installed or not,
-    and if user have superuser access.
+    Assert if user is running the script with root privileges.
     """
-    must_installed = {"v2ray"}
-    for program in must_installed:
-        assert shutil.which(program) is not None, f"{program!r} must be installed."
     assert os.getuid() == 0, "You must have super user permissions to run this program."
 
 
@@ -75,7 +75,7 @@ def make_logger(args: argparse.Namespace) -> logging.Logger:
     """
     Make a logger and return it.
     """
-    logging.raiseExceptions = True
+    logging.raiseExceptions = False
     if args.jalali:
         logging.Formatter.converter = tehran_time
 
@@ -154,7 +154,7 @@ def parsing_args() -> argparse.Namespace:
         "--config-file",
         default=Path("/usr/local/etc/v2ray/config.json"),
         type=Path,
-        help="Select configuration file, default is /usr/local/etc/v2ray/config.json.",
+        help="Select configuration file, default is '/usr/local/etc/v2ray/config.json'.",
     )
 
     parser.add_argument(
@@ -163,6 +163,13 @@ def parsing_args() -> argparse.Namespace:
         "default is 'IR'. (ISO 3166-1 alpha-2)",
         type=lambda x: x.upper(),
         default="IR",
+    )
+
+    parser.add_argument(
+        "--no-geoip",
+        help="Instead of using V2Ray GeoIP database, "
+        "downloading IPs from 'ripe.net' (more recent IPs but may slow V2Ray)",
+        action="store_true",
     )
 
     parser.add_argument(
@@ -177,7 +184,7 @@ def parsing_args() -> argparse.Namespace:
         "-w",
         "--website",
         help="Set the website to be used for checking the health of proxies, "
-        "default is https://facebook.com",
+        "default is 'https://facebook.com'",
         default="https://facebook.com",
     )
 
@@ -192,7 +199,7 @@ def parsing_args() -> argparse.Namespace:
     parser.add_argument(
         "-s",
         "--sleep-time",
-        help="Set the sleep time between each checkup, default is 30 minutes. (in seconds)",
+        help="Set the sleep time between each checkup, default is 1,800s. (in seconds)",
         type=int,
         default=1_800,
     )
@@ -200,7 +207,7 @@ def parsing_args() -> argparse.Namespace:
     parser.add_argument(
         "-l",
         "--log-level",
-        help="Set the log level, default is warning.",
+        help="Set the V2Ray log level, default is 'warning'.",
         choices=["debug", "info", "warning", "error", "none"],
         default="warning",
     )
@@ -208,19 +215,19 @@ def parsing_args() -> argparse.Namespace:
     group.add_argument(
         "-q",
         "--quiet",
-        help="No log file. (printing to stdout anyway)",
+        help="No log file (V2Conf). (printing to stdout anyway)",
         action="store_true",
     )
 
     group.add_argument(
         "--log-file",
-        help="Path for V2Conf log file.",
+        help="Path for V2Conf log file. default is '$PWD/V2Conf.log'",
         default=Path.cwd() / "V2Conf.log",
         type=Path,
     )
 
     parser.add_argument(
-        "--jalali", help="Use Jalali date and time.", action="store_true"
+        "--jalali", help="Use Jalali datetime for V2Conf logging", action="store_true"
     )
 
     parser.add_argument(
@@ -228,7 +235,7 @@ def parsing_args() -> argparse.Namespace:
         "--version",
         help="Show version and exit.",
         action="version",
-        version=f"%(prog)s {__VERSION__}",
+        version=f"%(prog)s {__version__}",
     )
 
     return checking_args(parser)

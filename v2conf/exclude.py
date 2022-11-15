@@ -28,7 +28,7 @@ def get_ips(country_code: str, logger: logging.Logger) -> list[str]:
         except (
             requests.exceptions.ConnectionError,
             requests.exceptions.Timeout,
-        ) as err:
+        ):
             # raise ConnectionError(f"Failed to connect to {link}") from err
             pass
         else:

@@ -11,11 +11,12 @@ Mahyar@Mahyar24.com, Sun Nov 13 2022
 import argparse
 import json
 import logging
+import random
 import secrets
 import socket
 from contextlib import closing
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from .exclude import make_ip_rule
 
@@ -134,25 +135,34 @@ def make_rules(
     path: Path,
     logger: logging.Logger,
     *,
+    geoip: bool,
     county_code: str,
     http_inbounds: list[dict],
     inbound_tags: list[str],
     freedom_outbound_tag: str,
-    outbound: Optional[str] = None,
+    outbound: str,
 ) -> list[dict]:
     """
     Make rules for the configuration file.
     """
 
     # Rules for excluding domestic IPs.
-    ip_rules = make_ip_rule(county_code, freedom_outbound_tag, logger)
-    logger.info(f"Excluding {len(ip_rules['ip'])} IPs for {county_code!r}")
+    if geoip:
+        ip_rule: dict[str, Union[str, list[str]]] = {
+            "type": "field",
+            "outboundTag": freedom_outbound_tag,
+            "ip": [f"geoip:{county_code.lower()}"],
+        }
+        logger.info(f"'geoip:{county_code.lower()}' going to {freedom_outbound_tag!r}")
+    else:
+        ip_rule = make_ip_rule(county_code, freedom_outbound_tag, logger)
+        logger.info(f"Excluding {len(ip_rule['ip'])} IPs for {county_code!r}")
 
     # Rules from rules directory
     rules = list(read_rules(path).values())
     logger.info(f"Read {len(rules)} rules")
 
-    rules += [ip_rules]
+    rules += [ip_rule]
 
     # Rules for routing http proxies to their corresponding outbounds.
     for http_inbound in http_inbounds:
@@ -164,14 +174,11 @@ def make_rules(
             }
         )
 
-    # If nothing is specified, route all traffic to freedom outbound. (cold start)
-    # Otherwise, route all traffic to the specified (best) outbound.
-    outbound_tag = outbound or freedom_outbound_tag
-    logger.info(f"Using {outbound_tag!r} as default outbound")
+    logger.info(f"Using {outbound!r} as main outbound")
     rules.append(
         {
             "inboundTag": inbound_tags,
-            "outboundTag": outbound_tag,
+            "outboundTag": outbound,
             "type": "field",
         }
     )
@@ -203,9 +210,17 @@ def make_conf(
 
     http_inbounds = make_http_inbounds(vpn_outbounds, logger)
 
+    # If nothing is specified for `outbound_tag`, route all traffic to
+    # a random vpn outbound. (cold start), Otherwise, route all traffic
+    # to the specified (best) outbound.
+    if outbound_tag is None:
+        logger.info("Cold start, routing all traffic to a random vpn outbound")
+        outbound_tag = random.choice(vpn_outbounds)
+
     rules = make_rules(
         args.path_conf_dir,
         logger,
+        geoip=not args.no_geoip,
         county_code=args.country_code,
         http_inbounds=http_inbounds,
         inbound_tags=list(inbounds.keys()),
@@ -223,7 +238,7 @@ def make_conf(
 
 def write_conf(path: Path, conf: dict) -> None:
     """
-    rewrite the configuration file.
+    Rewrite the configuration file.
     """
     with open(path, "w", encoding="utf-8") as file:
         json.dump(conf, file, indent=4)
