@@ -37,7 +37,7 @@ def find_n_unused_port(num: int) -> list[int]:
 
 def make_http_inbounds(outbound_tags: list[str], logger: logging.Logger) -> list[dict]:
     """
-    For every outbound, create a http inbound for performing the outbound.
+    For every outbound, create a http inbound for examining the performance.
     """
     http_inbounds = []
 
@@ -79,12 +79,12 @@ def read_inbounds(path: Path) -> dict[str, dict]:
             try:
                 inbounds[data["tag"]] = data
             except KeyError as err:
-                raise KeyError(f"Tag not found in {config.name}") from err
+                raise KeyError(f"Tag not found in {config.name!r}") from err
             else:
                 if data["tag"].startswith("inbound-http-test-"):
                     raise ValueError(
                         f"'inbound-http-test-*' is reserved for internal use. "
-                        f"change the tag in {config.name}"
+                        f"Change the tag in {config.name!r}"
                     )
 
     if len(inbounds) < 1:
@@ -108,7 +108,7 @@ def read_outbounds(path: Path) -> dict[str, dict]:
             try:
                 outbounds[data["tag"]] = data
             except KeyError as err:
-                raise KeyError(f"Tag not found in {config.name}") from err
+                raise KeyError(f"Tag not found in {config.name!r}") from err
 
             if data["protocol"] == "freedom":
                 check_freedom = True
@@ -132,7 +132,7 @@ def read_rules(path: Path) -> dict[str, dict]:
             try:
                 rules[data["tag"]] = data
             except KeyError as err:
-                raise KeyError(f"Tag not found in {config.name}") from err
+                raise KeyError(f"Tag not found in {config.name!r}") from err
 
     return rules
 
@@ -168,7 +168,10 @@ def make_rules(
     rules = list(read_rules(path).values())
     logger.info(f"Read {len(rules)} rules")
 
-    rules += [ip_rule]
+    # If downloading IPs from the internet failed, we must not
+    # create a rule with empty list, otherwise v2ray will crash.
+    if ip_rule["ip"]:
+        rules += [ip_rule]
 
     # Rules for routing http proxies to their corresponding outbounds.
     for http_inbound in http_inbounds:

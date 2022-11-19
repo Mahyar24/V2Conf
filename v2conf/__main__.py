@@ -28,7 +28,7 @@ from zoneinfo import ZoneInfo
 from .configs import make_conf, write_conf
 from .health import rank_outbounds
 
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 __author__ = "Mahyar Mahdavi"
 __email__ = "Mahyar@Mahyar24.com"
 __license__ = "GPLv3"
@@ -263,8 +263,8 @@ def main() -> None:
     args = parsing_args()
     logger = make_logger(args)
 
-    # at the first run, we will make a naive configuration file.
-    # and all inbounds will route to the `freedom` outbound.
+    # At the first run, we will make a naive configuration file.
+    # and all inbounds will route to a randomly selected outbound.
     conf = make_conf(args, logger)
     write_conf(args.config_file, conf)
     logger.info("Naive configuration file is written")
