@@ -8,6 +8,10 @@ Dependencies:
     - requests
     - aiohttp
     - [jdatetime] (optional) (if you want to configure the Jalali date-time for logging)
+
+Check out this Gist for detecting abnormal user traffic:
+https://gist.github.com/Mahyar24/d712a30a35576e5b8584c562e15e550c
+
 Compatible with Python 3.9+
 GitHub: https://github.com/Mahyar24/V2Conf
 Mahyar@Mahyar24.com, Sun Nov 13 2022
@@ -28,7 +32,7 @@ from zoneinfo import ZoneInfo
 from .configs import make_conf, write_conf
 from .health import rank_outbounds
 
-__version__ = "0.0.5"
+__version__ = "0.0.6"
 __author__ = "Mahyar Mahdavi"
 __email__ = "Mahyar@Mahyar24.com"
 __license__ = "GPLv3"
@@ -83,7 +87,7 @@ def make_logger(args: argparse.Namespace) -> logging.Logger:
     logger.setLevel(logging.INFO)
 
     handler_formatter = logging.Formatter(
-        "%(asctime)s:%(name)s:%(message)s.", datefmt="%Y-%m-%d %H:%M:%S"
+        "%(asctime)s:%(levelname)s:%(message)s.", datefmt="%Y-%m-%d %H:%M:%S"
     )
 
     stdout_handler = logging.StreamHandler()

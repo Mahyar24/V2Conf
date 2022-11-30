@@ -18,9 +18,12 @@ function main() {
       # Checking the SHA256SUM
       if sha256sum -c --status "geoip.dat.sha256sum"; then
         # If the SHA256SUM is correct, then move the file to the correct location
-        mv -f "/tmp/geoip.dat" "/usr/local/share/v2ray/geoip.dat"
-        rm -f "/tmp/geoip.dat.sha256sum"
-        echo "geoip.dat updated successfully!"
+        if mv -f "/tmp/geoip.dat" "/usr/local/share/v2ray/geoip.dat"; then
+          rm -f "/tmp/geoip.dat.sha256sum"
+          echo "geoip.dat updated successfully."
+        else
+          echo "Failed to move the file to the correct location."
+        fi
       else
         echo "sha256sum check failed"
         exit 1
