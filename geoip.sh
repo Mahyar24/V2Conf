@@ -23,6 +23,7 @@ function main() {
           echo "geoip.dat updated successfully."
         else
           echo "Failed to move the file to the correct location."
+          exit 1
         fi
       else
         echo "sha256sum check failed"
