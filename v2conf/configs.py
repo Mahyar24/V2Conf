@@ -99,8 +99,10 @@ def read_outbounds(path: Path) -> dict[str, dict]:
     """
     outbounds_path = path / "outbounds"
 
-    outbounds = {}
+    if not outbounds_path.is_dir():
+        raise ValueError("Outbounds directory not found!")
 
+    outbounds = {}
     check_freedom = False
     for config in outbounds_path.glob("*.json"):
         with open(config, "r", encoding="utf-8") as file:
@@ -124,6 +126,9 @@ def read_rules(path: Path) -> dict[str, dict]:
     Reading rules from the path.
     """
     rules_path = path / "rules"
+
+    if not rules_path.is_dir():
+        raise ValueError("Rules directory not found!")
 
     rules = {}
     for config in rules_path.glob("*.json"):
