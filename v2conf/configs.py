@@ -73,19 +73,24 @@ def read_inbounds(path: Path) -> dict[str, dict]:
         raise ValueError("Inbounds directory not found!")
 
     inbounds = {}
+    tags = []
     for config in inbounds_path.glob("*.json"):
         with open(config, "r", encoding="utf-8") as file:
             data = json.load(file)
-            try:
-                inbounds[data["tag"]] = data
-            except KeyError as err:
-                raise KeyError(f"Tag not found in {config.name!r}") from err
-            else:
-                if data["tag"].startswith("inbound-http-test-"):
-                    raise ValueError(
-                        f"'inbound-http-test-*' is reserved for internal use. "
-                        f"Change the tag in {config.name!r}"
-                    )
+        try:
+            inbounds[data["tag"]] = data
+        except KeyError as err:
+            raise KeyError(f"Tag not found in {config.name!r}") from err
+        else:
+            if data["tag"].startswith("inbound-http-test-"):
+                raise ValueError(
+                    f"'inbound-http-test-*' is reserved for internal use. "
+                    f"Change the tag in {config.name!r}"
+                )
+
+            if (tag := data["tag"]) in tags:
+                raise ValueError(f"Duplicated tags; {tag!r} already exist!")
+            tags.append(tag)
 
     if len(inbounds) < 1:
         raise ValueError("No inbound config found!")
@@ -103,17 +108,22 @@ def read_outbounds(path: Path) -> dict[str, dict]:
         raise ValueError("Outbounds directory not found!")
 
     outbounds = {}
+    tags = []
     check_freedom = False
     for config in outbounds_path.glob("*.json"):
         with open(config, "r", encoding="utf-8") as file:
             data = json.load(file)
-            try:
-                outbounds[data["tag"]] = data
-            except KeyError as err:
-                raise KeyError(f"Tag not found in {config.name!r}") from err
+        try:
+            outbounds[data["tag"]] = data
+        except KeyError as err:
+            raise KeyError(f"Tag not found in {config.name!r}") from err
+        else:
+            if (tag := data["tag"]) in tags:
+                raise ValueError(f"Duplicated tags; {tag!r} already exist!")
+            tags.append(tag)
 
-            if data["protocol"] == "freedom":
-                check_freedom = True
+        if data["protocol"] == "freedom":
+            check_freedom = True
 
     if not check_freedom:
         raise ValueError("Freedom outbound not found!")
@@ -131,13 +141,18 @@ def read_rules(path: Path) -> dict[str, dict]:
         raise ValueError("Rules directory not found!")
 
     rules = {}
+    tags = []
     for config in rules_path.glob("*.json"):
         with open(config, "r", encoding="utf-8") as file:
             data = json.load(file)
-            try:
-                rules[data["tag"]] = data
-            except KeyError as err:
-                raise KeyError(f"Tag not found in {config.name!r}") from err
+        try:
+            rules[data["tag"]] = data
+        except KeyError as err:
+            raise KeyError(f"Tag not found in {config.name!r}") from err
+        else:
+            if (tag := data["tag"]) in tags:
+                raise ValueError(f"Duplicated tags; {tag!r} already exist!")
+            tags.append(tag)
 
     return rules
 

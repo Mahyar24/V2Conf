@@ -28,10 +28,16 @@ def get_ips(country_code: str, logger: logging.Logger) -> list[str]:
         except requests.exceptions.RequestException:
             pass
         else:
-            return data["data"]["resources"]["ipv4"]
+            break
+    else:
+        logger.error(f"Failed to connect to {link!r}")
+        return []
 
-    logger.error(f"Failed to connect to {link!r}")
-    return []
+    try:
+        return data["data"]["resources"]["ipv4"]
+    except KeyError:
+        logger.error(f"{link!r} doesn't respond on planned schema!")
+        return []
 
 
 def make_ip_rule(

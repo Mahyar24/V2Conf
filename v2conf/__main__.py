@@ -32,7 +32,7 @@ from zoneinfo import ZoneInfo
 from .configs import make_conf, write_conf
 from .health import rank_outbounds
 
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 __author__ = "Mahyar Mahdavi"
 __email__ = "Mahyar@Mahyar24.com"
 __license__ = "GPLv3"
