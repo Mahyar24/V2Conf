@@ -36,7 +36,7 @@ def get_ips(country_code: str, logger: logging.Logger) -> list[str]:
     try:
         return data["data"]["resources"]["ipv4"]
     except KeyError:
-        logger.error(f"{link!r} doesn't respond on planned schema!")
+        logger.error(f"{link!r} doesn't respond on planned schema")
         return []
 
 

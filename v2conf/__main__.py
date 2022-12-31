@@ -249,13 +249,14 @@ def parsing_args() -> argparse.Namespace:
     return checking_args(parser)
 
 
-def restart_v2ray() -> None:
+def restart_v2ray(logger: logging.Logger) -> None:
     """
     Restart V2Ray service. (systemctl)
     When `check=True` is passed to `run`, `CalledProcessError` is raised if the
     exit code was non-zero.
     """
     subprocess.run(["systemctl", "restart", "v2ray"], check=True)
+    logger.warning("V2Ray is restarted")
 
 
 def main() -> None:
@@ -273,8 +274,7 @@ def main() -> None:
     write_conf(args.config_file, conf)
     logger.info("Naive configuration file is written")
 
-    restart_v2ray()
-    logger.info("V2Ray is restarted")
+    restart_v2ray(logger)
 
     time.sleep(30)
 
@@ -298,8 +298,7 @@ def main() -> None:
         write_conf(args.config_file, conf)
         logger.info("Configuration file is written")
         # Restarting to apply the new configuration file.
-        restart_v2ray()
-        logger.info("V2Ray is restarted")
+        restart_v2ray(logger)
         # Sleeping until the next checkup.
         logger.info(f"Sleeping for {args.sleep_time:,} seconds")
         time.sleep(args.sleep_time)

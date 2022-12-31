@@ -89,7 +89,9 @@ def read_inbounds(path: Path) -> dict[str, dict]:
                 )
 
             if (tag := data["tag"]) in tags:
-                raise ValueError(f"Duplicated tags; {tag!r} already exist!")
+                raise ValueError(
+                    f"Duplicated tags; {tag!r} already exist! Change the tag in {config.name!r}"
+                )
             tags.append(tag)
 
     if len(inbounds) < 1:
@@ -119,7 +121,9 @@ def read_outbounds(path: Path) -> dict[str, dict]:
             raise KeyError(f"Tag not found in {config.name!r}") from err
         else:
             if (tag := data["tag"]) in tags:
-                raise ValueError(f"Duplicated tags; {tag!r} already exist!")
+                raise ValueError(
+                    f"Duplicated tags; {tag!r} already exist! Change the tag in {config.name!r}"
+                )
             tags.append(tag)
 
         if data["protocol"] == "freedom":
@@ -151,7 +155,9 @@ def read_rules(path: Path) -> dict[str, dict]:
             raise KeyError(f"Tag not found in {config.name!r}") from err
         else:
             if (tag := data["tag"]) in tags:
-                raise ValueError(f"Duplicated tags; {tag!r} already exist!")
+                raise ValueError(
+                    f"Duplicated tags; {tag!r} already exist! Change the tag in {config.name!r}"
+                )
             tags.append(tag)
 
     return rules
