@@ -45,6 +45,9 @@ async def check_health(
                 test_site, proxy=proxy, proxy_auth=proxy_auth, timeout=timeout
             ) as resp:
                 if resp.ok:
+                    # Fetch the data chunk by chuck
+                    async for _ in resp.content.iter_chunked(2048):
+                        pass
                     result.append(time.perf_counter() - start_time)
                 else:
                     result.append(float("nan"))

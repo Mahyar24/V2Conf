@@ -24,20 +24,19 @@ def get_ips(country_code: str, logger: logging.Logger) -> list[str]:
     )
     for _ in range(5):
         try:
-            data = requests.get(link, timeout=20).json()
+            resp = requests.get(link, timeout=20)
+            resp.raise_for_status()
         except requests.exceptions.RequestException:
             pass
         else:
-            break
-    else:
-        logger.error(f"Failed to connect to {link!r}")
-        return []
+            try:
+                return resp.json()["data"]["resources"]["ipv4"]
+            except KeyError:
+                logger.error(f"{link!r} doesn't respond on planned schema")
+                return []
 
-    try:
-        return data["data"]["resources"]["ipv4"]
-    except KeyError:
-        logger.error(f"{link!r} doesn't respond on planned schema")
-        return []
+    logger.error(f"Failed to connect to {link!r}")
+    return []
 
 
 def make_ip_rule(
