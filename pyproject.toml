@@ -4,7 +4,9 @@ version = "0.0.9"
 description = "V2Conf helps you build V2Ray Config file automatically and evaluate and change config rules based on outbounds performances."
 authors = ["Mahyar Mahdavi <Mahyar@Mahyar24.com>"]
 license = "GPL-3.0-or-later"
-repository = "https://github.com/Mahyar24/V2Conf"
+homepage = "https://github.com/mahyar24/V2Conf/"
+repository = "https://github.com/Mahyar24/V2Conf/"
+readme = "README.md"
 keywords = [
     "V2Ray",
     "V2Fly",

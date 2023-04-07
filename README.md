@@ -12,7 +12,7 @@ sudo $(which v2conf) /home/ubuntu/confs -n 10 --no-geoip --country-code 'IR' --j
 ```bash
 sudo $(which v2conf) /home/ubuntu/confs -n 10 -s 900 --timeout-penalty 15 --ema 8,2 --no-geoip --country-code 'IR' --jalali -w "https://dl-cdn.alpinelinux.org/alpine/v3.17/releases/x86/alpine-minirootfs-3.17.1-x86.tar.gz" --log-file /home/ubuntu/v2conf.log 
 ```
-With these flags and settings, V2Conf will download the selected file every 15 minutes (900 / 60 = 16) 10 times for every outbound.\
+With these flags and settings, V2Conf will download the selected file every 15 minutes (900 / 60 = 15) 10 times for every outbound.\
 V2Conf will print logs in Jalali date times in `/home/ubuntu/v2conf.log` and `stdout` simultaneously and it will exclude IPs for Iran. (useful for domestic Iranian VPSs) \
 `--timeout-penalty 15` makes the program to consider a failed test as a test with 15 seconds latency and based on exponential moving average of last `8` evaluations (past 2 hours) and weighting more importance on recent evaluations (`2` times for every new evaluation) choose the best outbound and route all data within that.
 
