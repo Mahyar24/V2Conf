@@ -15,8 +15,30 @@ import math
 import statistics
 import time
 from collections import ChainMap
+from typing import Union
 
 import aiohttp
+
+# Saving records in case of ema flag
+HISTORICAL_RESULTS: list[dict[str, tuple[int, float]]] = []
+
+
+def calculate_ema(nums: list[Union[int, float]], n_th: int, smoothing: float) -> float:
+    """
+    Calculating Exponential Moving Average.
+    """
+    # Removing NaNs.
+    selected_nums = list(filter(lambda x: not math.isnan(x), nums))[-n_th:]
+    # If no number exist (happens in early stages and only in latency)
+    # return 0. It's harmless cause when latency is NaN, we rank the outbound lower by using
+    # No. of failures.
+    if not selected_nums:
+        return 0.0
+
+    ema = statistics.mean(selected_nums)
+    for num in selected_nums:
+        ema = (num * (smoothing / (1 + n_th))) + ema * (1 - (smoothing / (1 + n_th)))
+    return ema
 
 
 async def check_health(
@@ -79,6 +101,7 @@ async def rank_outbounds(
     We will sort the outbounds first by number of errors, then by average latency.
     """
     coroutines = []
+    nan_to_zero = lambda x: 0 if math.isnan(x) else x
 
     async with aiohttp.ClientSession() as session:
         for http_inbound in http_inbounds:
@@ -101,4 +124,48 @@ async def rank_outbounds(
     results = {k: calculate(v) for k, v in results.items()}
     logger.info(f"Results: {results}")
 
+    if args.ema:
+        global HISTORICAL_RESULTS
+        HISTORICAL_RESULTS.append(results)
+        outbound_keys = HISTORICAL_RESULTS[0].keys()
+        HISTORICAL_RESULTS = HISTORICAL_RESULTS[-int(args.ema[0]) :]
+
+    if args.timeout_penalty:
+        logger.info(f"Using '{args.timeout_penalty:.2f}' as timeout penalty")
+
+        if args.ema:
+            results = {
+                k: calculate_ema(
+                    [
+                        ((row[k][0] * args.timeout_penalty) + nan_to_zero(row[k][1]))
+                        for row in HISTORICAL_RESULTS
+                    ],
+                    n_th=int(args.ema[0]),
+                    smoothing=args.ema[1],
+                )
+                for k in outbound_keys
+            }
+    else:
+        if args.ema:
+            results = {
+                k: (
+                    calculate_ema(
+                        [row[k][0] for row in HISTORICAL_RESULTS],
+                        n_th=int(args.ema[0]),
+                        smoothing=args.ema[1],
+                    ),
+                    calculate_ema(
+                        [row[k][1] for row in HISTORICAL_RESULTS],
+                        n_th=int(args.ema[0]),
+                        smoothing=args.ema[1],
+                    ),
+                )
+                for k in outbound_keys
+            }
+
+    if args.ema:
+        logger.info(
+            f"Using EMA ({int(args.ema[0])},{args.ema[1]:.2f}) for ranking OutBounds."
+            f" Results: {results}"
+        )
     return list(dict(sorted(results.items(), key=lambda item: item[1])).keys())

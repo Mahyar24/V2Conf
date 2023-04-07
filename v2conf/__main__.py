@@ -27,6 +27,7 @@ import textwrap
 import time
 from pathlib import Path
 from time import struct_time
+from typing import Optional
 from zoneinfo import ZoneInfo
 
 from .configs import make_conf, write_conf
@@ -130,6 +131,11 @@ def checking_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
         parser.error(
             f"The directory you entered {args.path_conf_dir!r} is not a valid directory."
         )
+    if args.ema:
+        if args.ema[0] <= 1:
+            parser.error("EMA first value must be an integer greater than 1.")
+        if args.ema[1] <= 0:
+            parser.error("EMA second value must be a float greater than 0.")
     return args
 
 
@@ -192,7 +198,7 @@ def parsing_args() -> argparse.Namespace:
         "-w",
         "--website",
         help="Set the website to be used for checking the health of proxies, "
-        "default is 'https://facebook.com'",
+        "default is 'https://facebook.com'.",
         default="https://facebook.com",
     )
 
@@ -202,6 +208,22 @@ def parsing_args() -> argparse.Namespace:
         help="Set the number of tries for checking the health of proxies, default is 10.",
         type=int,
         default=10,
+    )
+
+    parser.add_argument(
+        "--timeout-penalty",
+        help="Converting timeouts to latency by this factor (in seconds), DISABLED by default.",
+        type=float,
+        default=False,
+    )
+
+    parser.add_argument(
+        "--ema",
+        help="Instead of choosing OutBound based on latest evaluation, "
+        "rank based on exponential moving average of last Nth tests and smoothing variable."
+        " (e.g. --ema 10,2.5) DISABLED by default.",
+        type=lambda x: tuple(map(float, x.split(","))),
+        default=False,
     )
 
     parser.add_argument(
@@ -278,6 +300,7 @@ def main() -> None:
 
     time.sleep(30)
 
+    previous_outbound: Optional[str] = None
     while True:
         # Ranking outbound performances.
         ranked_outbounds = asyncio.run(
@@ -292,13 +315,19 @@ def main() -> None:
             )
         )
 
-        # Make the new configuration file and set all inbounds to the best inbound.
-        conf = make_conf(args, logger, ranked_outbounds[0])
-        # Write the new configuration file.
-        write_conf(args.config_file, conf)
-        logger.info("Configuration file is written")
-        # Restarting to apply the new configuration file.
-        restart_v2ray(logger)
+        # Change and restart if new outbound is different, or we're cold starting.
+        if previous_outbound is None or ranked_outbounds[0] != previous_outbound:
+            # Make the new configuration file and set all inbounds to the best inbound.
+            conf = make_conf(args, logger, ranked_outbounds[0])
+            # Write the new configuration file.
+            write_conf(args.config_file, conf)
+            logger.info("New configuration file is written")
+            # Restarting to apply the new configuration file.
+            restart_v2ray(logger)
+            previous_outbound = ranked_outbounds[0]
+        else:
+            logger.info("Keeping same configurations")
+
         # Sleeping until the next checkup.
         logger.info(f"Sleeping for {args.sleep_time:,} seconds")
         time.sleep(args.sleep_time)

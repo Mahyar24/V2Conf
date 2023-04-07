@@ -8,6 +8,14 @@ sudo apt-get install pipx && pipx install --python python3.9 v2conf;
 sudo $(which v2conf) /home/ubuntu/confs -n 10 --no-geoip --country-code 'IR' --jalali --log-file /home/ubuntu/v2conf.log 
 ```
 
+## Recommended Usage
+```bash
+sudo $(which v2conf) /home/ubuntu/confs -n 10 -s 900 --timeout-penalty 15 --ema 8,2 --no-geoip --country-code 'IR' --jalali -w "https://dl-cdn.alpinelinux.org/alpine/v3.17/releases/x86/alpine-minirootfs-3.17.1-x86.tar.gz" --log-file /home/ubuntu/v2conf.log 
+```
+With these flags and settings, V2Conf will download the selected file every 15 minutes (900 / 60 = 16) 10 times for every outbound.\
+V2Conf will print logs in Jalali date times in `/home/ubuntu/v2conf.log` and `stdout` simultaneously and it will exclude IPs for Iran. (useful for domestic Iranian VPSs) \
+`--timeout-penalty 15` makes the program to consider a failed test as a test with 15 seconds latency and based on exponential moving average of last `8` evaluations (past 2 hours) and weighting more importance on recent evaluations (`2` times for every new evaluation) choose the best outbound and route all data within that.
+
 ## Details
 
 V2Conf expects a directory with this structure from you:
@@ -42,9 +50,9 @@ and **all configs must have a tag!**
 ## Usage
 ```
 $ v2conf --help
-usage: v2conf [-h] [-c CONFIG_FILE] [--country-code COUNTRY_CODE] [--no-geoip] [-t TIMEOUT] [-w WEBSITE] [-n NUM_OF_TRIES]
-              [-s SLEEP_TIME] [-l {debug,info,warning,error,none}] [-q | --log-file LOG_FILE] [--jalali] [-v]
-              [path_conf_dir]
+usage: v2conf [-h] [-c CONFIG_FILE] [--country-code COUNTRY_CODE] [--no-geoip] [-t TIMEOUT] [-w WEBSITE] [-n NUM_OF_TRIES] [--timeout-penalty TIMEOUT_PENALTY] [--ema EMA] [-s SLEEP_TIME]
+                   [-l {debug,info,warning,error,none}] [-q | --log-file LOG_FILE] [--jalali] [-v]
+                   [path_conf_dir]
 
 positional arguments:
   path_conf_dir         Select configuration directory, default is $PWD.
@@ -59,9 +67,12 @@ optional arguments:
   -t TIMEOUT, --timeout TIMEOUT
                         Set the timeout for checking the health of proxies, default is 15 seconds.
   -w WEBSITE, --website WEBSITE
-                        Set the website to be used for checking the health of proxies, default is 'https://facebook.com'
+                        Set the website to be used for checking the health of proxies, default is 'https://facebook.com'.
   -n NUM_OF_TRIES, --num-of-tries NUM_OF_TRIES
                         Set the number of tries for checking the health of proxies, default is 10.
+  --timeout-penalty TIMEOUT_PENALTY
+                        Converting timeouts to latency by this factor (in seconds), DISABLED by default.
+  --ema EMA             Instead of choosing OutBound based on latest evaluation, rank based on exponential moving average of last Nth tests and smoothing variable. (e.g. --ema 10,2.5), DISABLED by default.
   -s SLEEP_TIME, --sleep-time SLEEP_TIME
                         Set the sleep time between each checkup, default is 1,800s. (in seconds)
   -l {debug,info,warning,error,none}, --log-level {debug,info,warning,error,none}
@@ -71,8 +82,8 @@ optional arguments:
   --jalali              Use Jalali datetime for V2Conf logging
   -v, --version         Show version and exit.
 
-Written by: Mahyar Mahdavi <Mahyar@Mahyar24.com>. License: GNU GPLv3. Source Code: <https://github.com/mahyar24/V2Conf>. Reporting
-Bugs and PRs are welcomed. :)
+Written by: Mahyar Mahdavi <Mahyar@Mahyar24.com>. License: GNU GPLv3. Source Code: <https://github.com/mahyar24/V2Conf>. Reporting Bugs and PRs are welcomed. :)
+
 ```
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
