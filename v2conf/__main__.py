@@ -33,7 +33,7 @@ from zoneinfo import ZoneInfo
 from .configs import make_conf, write_conf
 from .health import rank_outbounds
 
-__version__ = "0.0.9"
+__version__ = "0.1.0"
 __author__ = "Mahyar Mahdavi"
 __email__ = "Mahyar@Mahyar24.com"
 __license__ = "GPLv3"
@@ -290,6 +290,9 @@ def main() -> None:
     args = parsing_args()
     logger = make_logger(args)
 
+    if args.timeout_penalty:
+        logger.info(f"Using '{args.timeout_penalty:.2f}' as timeout penalty")
+
     # At the first run, we will make a naive configuration file.
     # and all inbounds will route to a randomly selected outbound.
     conf = make_conf(args, logger)
@@ -301,10 +304,15 @@ def main() -> None:
     time.sleep(30)
 
     previous_outbound: Optional[str] = None
+
+    # Saving records in case of ema flag
+    historical_results: list[dict[str, tuple[int, float]]] = []
+
     while True:
         # Ranking outbound performances.
-        ranked_outbounds = asyncio.run(
+        ranked_outbounds, historical_results = asyncio.run(
             rank_outbounds(
+                historical_results,
                 args,
                 logger,
                 http_inbounds=[

@@ -19,9 +19,6 @@ from typing import Union
 
 import aiohttp
 
-# Saving records in case of ema flag
-HISTORICAL_RESULTS: list[dict[str, tuple[int, float]]] = []
-
 
 def calculate_ema(nums: list[Union[int, float]], n_th: int, smoothing: float) -> float:
     """
@@ -93,15 +90,86 @@ def calculate(results: list[float]) -> tuple[int, float]:
     return number_of_nans, statistics.mean(filter(lambda x: not math.isnan(x), results))
 
 
-async def rank_outbounds(
-    args: argparse.Namespace, logger: logging.Logger, *, http_inbounds: list[dict]
+def process_results(
+    results: dict[str, tuple[int, float]],
+    historical_results: list[dict[str, tuple[int, float]]],
+    args: argparse.Namespace,
+    logger: logging.Logger,
 ) -> list[str]:
     """
+    Processing fixed-schema results based on `--ema` and `--timeout-penalty` flags.
+    """
+    nan_to_zero = lambda x: 0.0 if math.isnan(x) else x
+
+    outbound_keys = historical_results[0].keys()
+
+    if args.timeout_penalty:
+        processed_results = {
+            k: calculate_ema(
+                [
+                    (
+                        (
+                            (row[k][0] * args.timeout_penalty)
+                            + (
+                                nan_to_zero(row[k][1])
+                                * (args.num_of_tries - (row[k][0]))
+                            )
+                        )
+                        / args.num_of_tries
+                    )
+                    for row in historical_results
+                ],
+                # N = 1, does nothing.
+                n_th=1 if not args.ema else int(args.ema[0]),
+                smoothing=1 if not args.ema else args.ema[1],
+            )
+            for k in outbound_keys
+        }
+    else:
+        if args.ema:
+            processed_results = {
+                k: (
+                    calculate_ema(
+                        [row[k][0] for row in historical_results],
+                        n_th=int(args.ema[0]),
+                        smoothing=args.ema[1],
+                    ),
+                    calculate_ema(
+                        [row[k][1] for row in historical_results],
+                        n_th=int(args.ema[0]),
+                        smoothing=args.ema[1],
+                    ),
+                )
+                for k in outbound_keys
+            }
+        else:
+            processed_results = results
+
+    if args.ema:
+        logger.info(
+            f"Using EMA ({int(args.ema[0])}, {args.ema[1]:.2f}) for ranking outbounds."
+            f" Results: {processed_results}"
+        )
+    return list(
+        dict(sorted(processed_results.items(), key=lambda item: item[1])).keys()
+    )
+
+
+async def rank_outbounds(
+    historical_results: list[dict[str, tuple[int, float]]],
+    args: argparse.Namespace,
+    logger: logging.Logger,
+    *,
+    http_inbounds: list[dict],
+) -> tuple[list[str], list[dict[str, tuple[int, float]]]]:
+    """
     Rank the outbounds by their health. best to worst.
-    We will sort the outbounds first by number of errors, then by average latency.
+    If `--timeout-penalty` is disabled, we will sort the outbounds first by number of errors,
+    then by average latency of succeeded attempts; otherwise, sorting will be based on overall
+    calculated average latency and failures will be considered as attempts
+    with `--timeout-penalty` latency.
     """
     coroutines = []
-    nan_to_zero = lambda x: 0 if math.isnan(x) else x
 
     async with aiohttp.ClientSession() as session:
         for http_inbound in http_inbounds:
@@ -124,48 +192,11 @@ async def rank_outbounds(
     results = {k: calculate(v) for k, v in results.items()}
     logger.info(f"Results: {results}")
 
-    if args.ema:
-        global HISTORICAL_RESULTS
-        HISTORICAL_RESULTS.append(results)
-        outbound_keys = HISTORICAL_RESULTS[0].keys()
-        HISTORICAL_RESULTS = HISTORICAL_RESULTS[-int(args.ema[0]) :]
+    historical_results.append(results)
+    num_historical_results = 1 if not args.ema else int(args.ema[0])
+    historical_results = historical_results[-num_historical_results:]
 
-    if args.timeout_penalty:
-        logger.info(f"Using '{args.timeout_penalty:.2f}' as timeout penalty")
-
-        if args.ema:
-            results = {
-                k: calculate_ema(
-                    [
-                        ((row[k][0] * args.timeout_penalty) + nan_to_zero(row[k][1]))
-                        for row in HISTORICAL_RESULTS
-                    ],
-                    n_th=int(args.ema[0]),
-                    smoothing=args.ema[1],
-                )
-                for k in outbound_keys
-            }
-    else:
-        if args.ema:
-            results = {
-                k: (
-                    calculate_ema(
-                        [row[k][0] for row in HISTORICAL_RESULTS],
-                        n_th=int(args.ema[0]),
-                        smoothing=args.ema[1],
-                    ),
-                    calculate_ema(
-                        [row[k][1] for row in HISTORICAL_RESULTS],
-                        n_th=int(args.ema[0]),
-                        smoothing=args.ema[1],
-                    ),
-                )
-                for k in outbound_keys
-            }
-
-    if args.ema:
-        logger.info(
-            f"Using EMA ({int(args.ema[0])},{args.ema[1]:.2f}) for ranking OutBounds."
-            f" Results: {results}"
-        )
-    return list(dict(sorted(results.items(), key=lambda item: item[1])).keys())
+    return (
+        process_results(results, historical_results, args, logger),
+        historical_results,
+    )
