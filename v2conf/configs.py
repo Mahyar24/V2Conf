@@ -78,7 +78,9 @@ def read_inbounds(path: Path) -> dict[str, dict]:
     tags = []
     for config in inbounds_path.glob("*.json"):
         with open(config, "r", encoding="utf-8") as file:
-            data = json.load(file)
+            source = file.read()
+            json_source = json5kit.parse(source).to_json()
+            data = json.loads(json_source)
         try:
             inbounds[data["tag"]] = data
         except KeyError as err:
