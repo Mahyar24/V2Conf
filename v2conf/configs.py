@@ -114,7 +114,9 @@ def read_outbounds(path: Path) -> dict[str, dict]:
     check_freedom = False
     for config in outbounds_path.glob("*.json"):
         with open(config, "r", encoding="utf-8") as file:
-            data = json.load(file)
+            source = file.read()
+            json_source = json5kit.parse(source).to_json()
+            data = json.loads(json_source)
         try:
             outbounds[data["tag"]] = data
         except KeyError as err:
@@ -148,7 +150,9 @@ def read_rules(path: Path) -> dict[str, dict]:
     tags = []
     for config in rules_path.glob("*.json"):
         with open(config, "r", encoding="utf-8") as file:
-            data = json.load(file)
+            source = file.read()
+            json_source = json5kit.parse(source).to_json()
+            data = json.loads(json_source)
         try:
             rules[data["tag"]] = data
         except KeyError as err:
