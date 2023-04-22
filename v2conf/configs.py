@@ -9,6 +9,7 @@ Mahyar@Mahyar24.com, Sun Nov 13 2022
 
 
 import argparse
+import io
 import json
 import logging
 import random
@@ -21,6 +22,12 @@ from typing import Optional, Union
 import json5kit
 
 from .exclude import make_ip_rule
+
+
+def read_json5_file(file: io.TextIO) -> dict[str, dict]:
+    source = file.read()
+    json_source = json5kit.parse(source).to_json()
+    return json.loads(json_source)
 
 
 def find_n_unused_port(num: int) -> list[int]:
@@ -78,9 +85,7 @@ def read_inbounds(path: Path) -> dict[str, dict]:
     tags = []
     for config in inbounds_path.glob("*.json"):
         with open(config, "r", encoding="utf-8") as file:
-            source = file.read()
-            json_source = json5kit.parse(source).to_json()
-            data = json.loads(json_source)
+            data = read_json5_file(file)
         try:
             inbounds[data["tag"]] = data
         except KeyError as err:
@@ -118,9 +123,7 @@ def read_outbounds(path: Path) -> dict[str, dict]:
     check_freedom = False
     for config in outbounds_path.glob("*.json"):
         with open(config, "r", encoding="utf-8") as file:
-            source = file.read()
-            json_source = json5kit.parse(source).to_json()
-            data = json.loads(json_source)
+            data = read_json5_file(file)
         try:
             outbounds[data["tag"]] = data
         except KeyError as err:
@@ -154,9 +157,7 @@ def read_rules(path: Path) -> dict[str, dict]:
     tags = []
     for config in rules_path.glob("*.json"):
         with open(config, "r", encoding="utf-8") as file:
-            source = file.read()
-            json_source = json5kit.parse(source).to_json()
-            data = json.loads(json_source)
+            data = read_json5_file(file)
         try:
             rules[data["tag"]] = data
         except KeyError as err:
