@@ -18,6 +18,8 @@ from contextlib import closing
 from pathlib import Path
 from typing import Optional, Union
 
+import json5kit
+
 from .exclude import make_ip_rule
 
 
