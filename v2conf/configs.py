@@ -24,7 +24,7 @@ import json5kit
 from .exclude import make_ip_rule
 
 
-def read_json5_file(file: io.TextIO) -> dict:
+def read_json5_file(file: io.TextIOWrapper) -> dict:
     """
     Reading JSON5 files.
     """
