@@ -46,6 +46,7 @@ e.g. `main_entry.json`:
     ...
 ```
 and **all configs must have a tag!**
+P.S.: Thanks to [Tushar](https://github.com/Mahyar24/V2Conf/pull/2) V2Conf now supports JSON5 format for configs.
 
 
 ## Usage
