@@ -33,7 +33,7 @@ from zoneinfo import ZoneInfo
 from .configs import make_conf, write_conf
 from .health import rank_outbounds
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __author__ = "Mahyar Mahdavi"
 __email__ = "Mahyar@Mahyar24.com"
 __license__ = "GPLv3"
@@ -45,7 +45,7 @@ def check_requirements() -> None:
     """
     Assert if user is running the script with root privileges.
     """
-    assert os.getuid() == 0, "You must have super user permissions to run this program."
+    assert os.getuid() != 0, "You must have super user permissions to run this program."
 
 
 def tehran_time(*_, **__) -> time.struct_time:
@@ -172,6 +172,15 @@ def parsing_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
+        "-p",
+        "--process-name",
+        default="v2ray",
+        type=str,
+        help="Select the process name, default is 'v2ray'. If you are using 'xray'"
+        " set it here and in the custom config file path in '-c' flag.",
+    )
+
+    parser.add_argument(
         "--country-code",
         help="Exclude a country from the list of IPs to be routed; "
         "default is 'IR'. (ISO 3166-1 alpha-2)",
@@ -271,13 +280,13 @@ def parsing_args() -> argparse.Namespace:
     return checking_args(parser)
 
 
-def restart_v2ray(logger: logging.Logger) -> None:
+def restart_v2ray(logger: logging.Logger, process_name: str = "v2ray") -> None:
     """
     Restart V2Ray service. (systemctl)
     When `check=True` is passed to `run`, `CalledProcessError` is raised if the
     exit code was non-zero.
     """
-    subprocess.run(["systemctl", "restart", "v2ray"], check=True)
+    subprocess.run(["systemctl", "restart", process_name], check=True)
     logger.warning("V2Ray is restarted")
 
 
@@ -299,7 +308,7 @@ def main() -> None:
     write_conf(args.config_file, conf)
     logger.info("Naive configuration file is written")
 
-    restart_v2ray(logger)
+    restart_v2ray(logger, args.process_name)
 
     time.sleep(30)
 
@@ -331,7 +340,7 @@ def main() -> None:
             write_conf(args.config_file, conf)
             logger.info("New configuration file is written")
             # Restarting to apply the new configuration file.
-            restart_v2ray(logger)
+            restart_v2ray(logger, args.process_name)
             previous_outbound = ranked_outbounds[0]
         else:
             logger.info("Keeping same configurations")

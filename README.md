@@ -15,7 +15,10 @@ sudo $(which v2conf) /home/ubuntu/confs -n 10 -s 900 --timeout-penalty 15 --ema 
 With these flags and settings, V2Conf will download the selected file every 15 minutes (900 / 60 = 15) 10 times for each outbound.\
 V2Conf will print logs in Jalali date times in `/home/ubuntu/v2conf.log` and `stdout` simultaneously and it will exclude IPs for Iran. (useful for domestic Iranian VPSs) \
 `--timeout-penalty 15` makes the program to consider a failed test as a test with 15 seconds latency and based on exponential moving average of last `8` evaluations (past 2 hours) and weighting more importance on recent evaluations (`2` times for every new evaluation) choose the best outbound and route all data within that.\
-`--log-level error` indicates that **V2Ray** log level will be `error`.
+`--log-level error` indicates that **V2Ray** log level will be `error`.\
+For using it with `xray` you can specify `-c /usr/local/etc/xray/config.json` and `-p xray` flags.\
+
+Be aware that **V2Conf only supports V2Fly V4 JSON configs**.
 
 ## Details
 
@@ -51,18 +54,19 @@ P.S.: Thanks to [Tushar](https://github.com/Mahyar24/V2Conf/pull/2) V2Conf now s
 
 ## Usage
 ```
-$ v2conf --help
-usage: v2conf [-h] [-c CONFIG_FILE] [--country-code COUNTRY_CODE] [--no-geoip] [-t TIMEOUT] [-w WEBSITE] [-n NUM_OF_TRIES] [--timeout-penalty TIMEOUT_PENALTY] [--ema EMA] [-s SLEEP_TIME]
+usage: v2conf [-h] [-c CONFIG_FILE] [-p PROCESS_NAME] [--country-code COUNTRY_CODE] [--no-geoip] [-t TIMEOUT] [-w WEBSITE] [-n NUM_OF_TRIES] [--timeout-penalty TIMEOUT_PENALTY] [--ema EMA] [-s SLEEP_TIME]
                    [-l {debug,info,warning,error,none}] [-q | --log-file LOG_FILE] [--jalali] [-v]
                    [path_conf_dir]
 
 positional arguments:
   path_conf_dir         Select configuration directory, default is $PWD.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -c CONFIG_FILE, --config-file CONFIG_FILE
                         Select configuration file, default is '/usr/local/etc/v2ray/config.json'.
+  -p PROCESS_NAME, --process-name PROCESS_NAME
+                        Select the process name, default is 'v2ray'. If you are using 'xray' set it here and in the custom config file path in '-c' flag.
   --country-code COUNTRY_CODE
                         Exclude a country from the list of IPs to be routed; default is 'IR'. (ISO 3166-1 alpha-2)
   --no-geoip            Instead of using V2Ray GeoIP database, downloading IPs from 'ripe.net' (more recent IPs but may slow V2Ray)
@@ -74,7 +78,7 @@ optional arguments:
                         Set the number of tries for checking the health of proxies, default is 10.
   --timeout-penalty TIMEOUT_PENALTY
                         Converting timeouts to latency by this factor (in seconds), DISABLED by default.
-  --ema EMA             Instead of choosing OutBound based on latest evaluation, rank based on exponential moving average of last Nth tests and smoothing variable. (e.g. --ema 10,2.5), DISABLED by default.
+  --ema EMA             Instead of choosing OutBound based on latest evaluation, rank based on exponential moving average of last Nth tests and smoothing variable. (e.g. --ema 10,2.5) DISABLED by default.
   -s SLEEP_TIME, --sleep-time SLEEP_TIME
                         Set the sleep time between each checkup, default is 1,800s. (in seconds)
   -l {debug,info,warning,error,none}, --log-level {debug,info,warning,error,none}
@@ -85,12 +89,12 @@ optional arguments:
   -v, --version         Show version and exit.
 
 Written by: Mahyar Mahdavi <Mahyar@Mahyar24.com>. License: GNU GPLv3. Source Code: <https://github.com/mahyar24/V2Conf>. Reporting Bugs and PRs are welcomed. :)
-
 ```
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 Contact me: <OSS@Mahyar24.com> :)
 
 ## License
-[GNU GPLv3 ](https://choosealicense.com/licenses/gpl-3.0/)
+[GNU GPLv3](https://choosealicense.com/licenses/gpl-3.0/)
