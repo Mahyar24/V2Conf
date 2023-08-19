@@ -18,8 +18,6 @@ V2Conf will print logs in Jalali date times in `/home/ubuntu/v2conf.log` and `st
 `--log-level error` indicates that **V2Ray** log level will be `error`.\
 For using it with `xray` you can specify `-c /usr/local/etc/xray/config.json` and `-p xray` flags.\
 
-Be aware that **V2Conf only supports V2Fly V4 JSON configs**.
-
 ## Details
 
 V2Conf expects a directory with this structure from you:
