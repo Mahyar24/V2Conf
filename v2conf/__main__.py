@@ -287,7 +287,7 @@ def restart_v2ray(logger: logging.Logger, process_name: str = "v2ray") -> None:
     exit code was non-zero.
     """
     subprocess.run(["systemctl", "restart", process_name], check=True)
-    logger.warning("V2Ray is restarted")
+    logger.warning(f"V2Ray ({process_name}) is restarted")
 
 
 def main() -> None:
@@ -343,7 +343,7 @@ def main() -> None:
             restart_v2ray(logger, args.process_name)
             previous_outbound = ranked_outbounds[0]
         else:
-            logger.info("Keeping same configurations")
+            logger.info(f"Keeping same configurations ({previous_outbound})")
 
         # Sleeping until the next checkup.
         logger.info(f"Sleeping for {args.sleep_time:,} seconds")
