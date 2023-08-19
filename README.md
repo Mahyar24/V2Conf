@@ -55,13 +55,13 @@ P.S.: Thanks to [Tushar](https://github.com/Mahyar24/V2Conf/pull/2) V2Conf now s
 ## Usage
 ```
 usage: v2conf [-h] [-c CONFIG_FILE] [-p PROCESS_NAME] [--country-code COUNTRY_CODE] [--no-geoip] [-t TIMEOUT] [-w WEBSITE] [-n NUM_OF_TRIES] [--timeout-penalty TIMEOUT_PENALTY] [--ema EMA] [-s SLEEP_TIME]
-                   [-l {debug,info,warning,error,none}] [-q | --log-file LOG_FILE] [--jalali] [-v]
+                   [-l {debug,info,warning,error,none}] [-q | --log-file LOG_FILE] [--jalali] [--stats] [--stats-port STATS_PORT] [--sys-only | --users-only] [-v]
                    [path_conf_dir]
 
 positional arguments:
   path_conf_dir         Select configuration directory, default is $PWD.
 
-options:
+optional arguments:
   -h, --help            show this help message and exit
   -c CONFIG_FILE, --config-file CONFIG_FILE
                         Select configuration file, default is '/usr/local/etc/v2ray/config.json'.
@@ -86,9 +86,15 @@ options:
   -q, --quiet           No log file (V2Conf). (printing to stdout anyway)
   --log-file LOG_FILE   Path for V2Conf log file. default is '$PWD/V2Conf.log'
   --jalali              Use Jalali datetime for V2Conf logging
+  --stats               Activating traffic statistics
+  --stats-port STATS_PORT
+                        Set the port for statistics API. Default is: 10085
+  --sys-only            Only system traffic statistics
+  --users-only          Only users traffic statistics
   -v, --version         Show version and exit.
 
 Written by: Mahyar Mahdavi <Mahyar@Mahyar24.com>. License: GNU GPLv3. Source Code: <https://github.com/mahyar24/V2Conf>. Reporting Bugs and PRs are welcomed. :)
+
 ```
 
 ## Contributing

@@ -33,7 +33,7 @@ def read_json5_file(file: io.TextIOWrapper) -> dict:
     return json.loads(json_source)
 
 
-def find_n_unused_port(num: int) -> list[int]:
+def find_n_unused_port(num: int, banned_ports: Optional[set[int]] = None) -> list[int]:
     """
     Find n unique unused port and return them as a list.
     """
@@ -42,18 +42,24 @@ def find_n_unused_port(num: int) -> list[int]:
         with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
             sock.bind(("", 0))
             port = sock.getsockname()[1]
+            # Checking if the port is banned
+            if banned_ports is not None and port in banned_ports:
+                continue
             ports.add(port)
 
     return list(ports)
 
 
-def make_http_inbounds(outbound_tags: list[str], logger: logging.Logger) -> list[dict]:
+def make_http_inbounds(
+    outbound_tags: list[str], banned_ports: set[int], logger: logging.Logger
+) -> list[dict]:
     """
     For every outbound, create a http inbound for examining the performance.
+    Banning used ports in inbounds.
     """
     http_inbounds = []
 
-    ports = find_n_unused_port(len(outbound_tags))
+    ports = find_n_unused_port(len(outbound_tags), banned_ports)
 
     for port, outbound_tag in zip(ports, outbound_tags):
         http_inbounds.append(
@@ -243,6 +249,16 @@ def make_conf(
     """
     inbounds = read_inbounds(args.path_conf_dir)
     logger.info(f"Read {len(inbounds)} inbounds")
+    inbounds_used_ports = {
+        inbound["port"]
+        for inbound in inbounds.values()
+        if inbound.get("port") is not None
+    }
+
+    if args.stats_port in inbounds_used_ports:
+        raise ValueError(
+            f"Stats port {args.stats_port!r} already used by another inbound!"
+        )
 
     outbounds = read_outbounds(args.path_conf_dir)
 
@@ -260,7 +276,12 @@ def make_conf(
     # find tag of freedom outbound, using when making first naive config file.
     freedom = [k for k, v in outbounds.items() if v["protocol"] == "freedom"][0]
 
-    http_inbounds = make_http_inbounds(vpn_outbounds, logger)
+    http_inbounds = make_http_inbounds(
+        vpn_outbounds,
+        # Make sure the inbound ports or stats port is not used by any inbound.
+        inbounds_used_ports | {args.stats_port},
+        logger,
+    )
 
     # If nothing is specified for `outbound_tag`, route all traffic to
     # a random vpn outbound. (cold start), Otherwise, route all traffic
@@ -280,12 +301,50 @@ def make_conf(
         outbound=outbound_tag,
     )
 
-    return {
+    conf = {
         "log": {"loglevel": args.log_level},
         "inbounds": list(inbounds.values()) + http_inbounds,
         "outbounds": list(outbounds.values()),
-        "routing": {"domainStrategy": "IPIfNonMatch", "rules": rules},
+        "routing": {"domainStrategy": "UseIPv4", "rules": rules},
     }
+
+    if args.stats:
+        conf["stats"] = {}
+        stats_users_cond = args.users_only or (not args.sys_only)
+        stats_sys_cond = args.sys_only or (not args.users_only)
+        conf["policy"] = {
+            "levels": {
+                "0": {
+                    "statsUserUplink": stats_users_cond,
+                    "statsUserDownlink": stats_users_cond,
+                }
+            },
+            "system": {
+                "statsInboundUplink": stats_sys_cond,
+                "statsInboundDownlink": stats_sys_cond,
+                "statsOutboundUplink": stats_sys_cond,
+                "statsOutboundDownlink": stats_sys_cond,
+            },
+        }
+        conf["api"] = {
+            "services": ["HandlerService", "LoggerService", "StatsService"],
+            "tag": "api",
+        }
+        conf["inbounds"].append(
+            {
+                "listen": "127.0.0.1",
+                "port": args.stats_port,
+                "protocol": "dokodemo-door",
+                "settings": {"address": "127.0.0.1"},
+                "tag": "api",
+                "sniffing": None,
+            },
+        )
+        conf["routing"]["rules"].append(
+            {"inboundTag": ["api"], "outboundTag": "api", "type": "field"}
+        )
+
+    return conf
 
 
 def write_conf(path: Path, conf: dict) -> None:

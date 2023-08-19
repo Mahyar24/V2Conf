@@ -33,7 +33,7 @@ from zoneinfo import ZoneInfo
 from .configs import make_conf, write_conf
 from .health import rank_outbounds
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 __author__ = "Mahyar Mahdavi"
 __email__ = "Mahyar@Mahyar24.com"
 __license__ = "GPLv3"
@@ -136,6 +136,16 @@ def checking_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
             parser.error("EMA first value must be an integer greater than 1.")
         if args.ema[1] <= 0:
             parser.error("EMA second value must be a float greater than 0.")
+
+    # When args.starts_port is not default and --stats flag is not enabled.
+    if args.stats_port != 10_085 and not args.stats:
+        parser.error("You must enable --stats flag in order to use --stats-port flag.")
+
+    if (args.sys_only or args.users_only) and not args.stats:
+        parser.error(
+            "You must enable --stats flag in order to use --sys-only or --users-only flags."
+        )
+
     return args
 
 
@@ -154,6 +164,7 @@ def parsing_args() -> argparse.Namespace:
         )
     )
     group = parser.add_mutually_exclusive_group()
+    group1 = parser.add_mutually_exclusive_group()
 
     parser.add_argument(
         "path_conf_dir",
@@ -270,6 +281,26 @@ def parsing_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
+        "--stats", help="Activating traffic statistics", action="store_true"
+    )
+
+    # If you want to change the default port,
+    # remember to change it in `checking_args` function too.
+    parser.add_argument(
+        "--stats-port",
+        help="Set the port for statistics API. Default is: 10085",
+        type=int,
+        default=10_085,
+    )
+
+    group1.add_argument(
+        "--sys-only", help="Only system traffic statistics", action="store_true"
+    )
+    group1.add_argument(
+        "--users-only", help="Only users traffic statistics", action="store_true"
+    )
+
+    parser.add_argument(
         "-v",
         "--version",
         help="Show version and exit.",
@@ -307,6 +338,9 @@ def main() -> None:
     conf = make_conf(args, logger)
     write_conf(args.config_file, conf)
     logger.info("Naive configuration file is written")
+
+    if args.stats:
+        logger.info(f"Traffic statistics is available at `127.0.0.1:{args.stats_port}`")
 
     restart_v2ray(logger, args.process_name)
 
