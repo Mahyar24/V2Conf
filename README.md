@@ -94,6 +94,13 @@ optional arguments:
 Written by: Mahyar Mahdavi <Mahyar@Mahyar24.com>. License: GNU GPLv3. Source Code: <https://github.com/mahyar24/V2Conf>. Reporting Bugs and PRs are welcomed. :)
 
 ```
+## More Tools
+Check out these Gist files for more tools:
+
+- [V2Ray-Traffic](https://gist.github.com/Mahyar24/0751f08969ccb0aab54ae80a0f80daff) - a script for monitoring V2Ray traffic.
+- [V2Ray-Abnormal](https://gist.github.com/Mahyar24/d712a30a35576e5b8584c562e15e550c) - a script for monitoring V2Ray abnormal IP connections.
+- [V2Ray-Abnormal-Polars](https://gist.github.com/Mahyar24/d712a30a35576e5b8584c562e15e550c) - a script for monitoring V2Ray abnormal IP connections implemented with Polars.
+- [V2Ray-IP-GeoLocation](https://gist.github.com/Mahyar24/1e04c46b27314de0475a4b9f72b3285f) - a script for checking IP GeoLocations of users. 
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
