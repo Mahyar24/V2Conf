@@ -1,6 +1,6 @@
 # V2Conf
 
-V2Conf helps you build V2Ray Config file automatically and evaluate and change config rules based on outbounds performances.
+V2Conf helps you build V2Ray configuration files automatically and evaluate and modify configuration rules based on outbound performance.
 ## Installation & Running
 
 ```bash
