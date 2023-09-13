@@ -99,7 +99,7 @@ Check out these Gist files for more tools:
 
 - [V2Ray-Traffic](https://gist.github.com/Mahyar24/0751f08969ccb0aab54ae80a0f80daff) - a script for monitoring V2Ray traffic.
 - [V2Ray-Abnormal](https://gist.github.com/Mahyar24/d712a30a35576e5b8584c562e15e550c) - a script for monitoring V2Ray abnormal IP connections.
-- [V2Ray-Abnormal-Polars](https://gist.github.com/Mahyar24/d712a30a35576e5b8584c562e15e550c) - a script for monitoring V2Ray abnormal IP connections implemented with Polars.
+- [V2Ray-Abnormal-Polars](https://gist.github.com/Mahyar24/ff11ed7973bbe3a37b1caedef40ff850) - a script for monitoring V2Ray abnormal IP connections implemented with Polars.
 - [V2Ray-IP-GeoLocation](https://gist.github.com/Mahyar24/1e04c46b27314de0475a4b9f72b3285f) - a script for checking IP GeoLocations of users. 
 
 ## Contributing
