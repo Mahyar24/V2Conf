@@ -26,15 +26,14 @@ def calculate_ema(nums: list[Union[int, float]], n_th: int, smoothing: float) ->
     """
     # Removing NaNs.
     selected_nums = list(filter(lambda x: not math.isnan(x), nums))[-n_th:]
-    # If no number exist (happens in early stages and only in latency)
-    # return 0. It's harmless cause when latency is NaN, we rank the outbound lower by using
+    # If no number exists (happens in early stages and only in latency)
+    # return 0. It's a harmless cause when latency is NaN; we rank the outbound lower by using
     # No. of failures.
     if not selected_nums:
         return 0.0
 
-    ema = statistics.mean(selected_nums)
-    for num in selected_nums:
-        ema = (num * (smoothing / (1 + n_th))) + ema * (1 - (smoothing / (1 + n_th)))
+    powers = [smoothing**i for i in range(len(selected_nums))]
+    ema = sum(num * power for power, num in zip(powers, selected_nums)) / sum(powers)
     return ema
 
 
@@ -163,7 +162,7 @@ async def rank_outbounds(
     http_inbounds: list[dict],
 ) -> tuple[list[str], list[dict[str, tuple[int, float]]]]:
     """
-    Rank the outbounds by their health. best to worst.
+    Rank the outbounds by their health Best to worst.
     If `--timeout-penalty` is disabled, we will sort the outbounds first by number of errors,
     then by average latency of succeeded attempts; otherwise, sorting will be based on overall
     calculated average latency and failures will be considered as attempts

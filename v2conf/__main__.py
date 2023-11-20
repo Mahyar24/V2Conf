@@ -33,7 +33,7 @@ from zoneinfo import ZoneInfo
 from .configs import make_conf, write_conf
 from .health import rank_outbounds
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 __author__ = "Mahyar Mahdavi"
 __email__ = "Mahyar@Mahyar24.com"
 __license__ = "GPLv3"
@@ -43,7 +43,7 @@ __pypi__ = "https://PyPI.org/project/V2Conf"
 
 def check_requirements() -> None:
     """
-    Assert if user is running the script with root privileges.
+    Assert if a user is running the script with root privileges.
     """
     assert os.getuid() == 0, "You must have super user permissions to run this program."
 
@@ -137,7 +137,7 @@ def checking_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
         if args.ema[1] <= 0:
             parser.error("EMA second value must be a float greater than 0.")
 
-    # When args.starts_port is not default and --stats flag is not enabled.
+    # When args.starts_port is not default and a --stats flag is not enabled.
     if args.stats_port != 10_085 and not args.stats:
         parser.error("You must enable --stats flag in order to use --stats-port flag.")
 
@@ -313,7 +313,7 @@ def parsing_args() -> argparse.Namespace:
 
 def restart_v2ray(logger: logging.Logger, process_name: str = "v2ray") -> None:
     """
-    Restart V2Ray service. (systemctl)
+    Restart V2Ray service. (Systemctl)
     When `check=True` is passed to `run`, `CalledProcessError` is raised if the
     exit code was non-zero.
     """
@@ -334,13 +334,13 @@ def main() -> None:
         logger.info(f"Using '{args.timeout_penalty:.2f}' as timeout penalty")
 
     # At the first run, we will make a naive configuration file.
-    # and all inbounds will route to a randomly selected outbound.
+    # And all inbounds will route to a randomly selected outbound.
     conf = make_conf(args, logger)
     write_conf(args.config_file, conf)
     logger.info("Naive configuration file is written")
 
     if args.stats:
-        logger.info(f"Traffic statistics is available at `127.0.0.1:{args.stats_port}`")
+        logger.info(f"Traffic statistics is available at '127.0.0.1:{args.stats_port}'")
 
     restart_v2ray(logger, args.process_name)
 
@@ -348,7 +348,7 @@ def main() -> None:
 
     previous_outbound: Optional[str] = None
 
-    # Saving records in case of ema flag
+    # Saving records in case of an ema flag
     historical_results: list[dict[str, tuple[int, float]]] = []
 
     while True:

@@ -54,7 +54,7 @@ def make_http_inbounds(
     outbound_tags: list[str], banned_ports: set[int], logger: logging.Logger
 ) -> list[dict]:
     """
-    For every outbound, create a http inbound for examining the performance.
+    For every outbound, create an http inbound for examining the performance.
     Banning used ports in inbounds.
     """
     http_inbounds = []
@@ -120,7 +120,7 @@ def read_inbounds(path: Path) -> dict[str, dict]:
 
 def read_outbounds(path: Path) -> dict[str, dict]:
     """
-    Reading outbounds from the path. at least one freedom outbound is required.
+    Reading outbounds from the path. At least one freedom outbound is required.
     """
     outbounds_path = path / "outbounds"
 
@@ -213,7 +213,7 @@ def make_rules(
     logger.info(f"Read {len(rules)} rules")
 
     # If downloading IPs from the internet failed, we must not
-    # create a rule with empty list, otherwise v2ray will crash.
+    # create a rule with empty list; otherwise v2ray will crash.
     if ip_rule["ip"]:
         rules += [ip_rule]
 
@@ -284,7 +284,7 @@ def make_conf(
     )
 
     # If nothing is specified for `outbound_tag`, route all traffic to
-    # a random vpn outbound. (cold start), Otherwise, route all traffic
+    # a random vpn outbound. (Cold start), Otherwise, route all traffic
     # to the specified (best) outbound.
     if outbound_tag is None:
         logger.info("Cold start, routing all traffic to a random vpn outbound")
