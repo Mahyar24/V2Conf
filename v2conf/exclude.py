@@ -32,6 +32,7 @@ def get_ips(country_code: str, logger: logging.Logger) -> list[str]:
             try:
                 return resp.json()["data"]["resources"]["ipv4"]
             except KeyError:
+                # If API had a problem, but it responded with 2** code.
                 logger.error(f"{link!r} doesn't respond on planned schema")
                 return []
 

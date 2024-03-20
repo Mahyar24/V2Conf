@@ -54,7 +54,7 @@ def make_http_inbounds(
     outbound_tags: list[str], banned_ports: set[int], logger: logging.Logger
 ) -> list[dict]:
     """
-    For every outbound, create an http inbound for examining the performance.
+    For every outbound, create an HTTP inbound for examining the performance.
     Banning used ports in inbounds.
     """
     http_inbounds = []
@@ -212,6 +212,14 @@ def make_rules(
     rules = list(read_rules(path).values())
     logger.info(f"Read {len(rules)} rules")
 
+    # Finding already designated inbounds.
+    designated_inbounds: set[str] = set()
+    for rule in rules:
+        if "inboundTag" in rule and "outboundTag" in rule and rule["type"] == "field":
+            designated_inbounds.update(rule["inboundTag"])
+    if designated_inbounds:
+        logger.warning(f"Already designated inbounds: {list(designated_inbounds)}")
+
     # If downloading IPs from the internet failed, we must not
     # create a rule with empty list; otherwise v2ray will crash.
     if ip_rule["ip"]:
@@ -230,7 +238,7 @@ def make_rules(
     logger.info(f"Using {outbound!r} as main outbound")
     rules.append(
         {
-            "inboundTag": inbound_tags,
+            "inboundTag": list(set(inbound_tags) - designated_inbounds),
             "outboundTag": outbound,
             "type": "field",
         }
