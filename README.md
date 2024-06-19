@@ -10,7 +10,7 @@ sudo $(which v2conf) /home/ubuntu/confs -n 10 --no-geoip --country-code 'IR' --j
 
 ## Recommended Usage
 ```bash
-sudo $(which v2conf) /home/ubuntu/confs -n 10 -s 900 --timeout-penalty 15 --ema 8,2 --no-geoip --country-code 'IR' --log-level error --jalali -w "https://dl-cdn.alpinelinux.org/alpine/v3.17/releases/x86/alpine-minirootfs-3.17.1-x86.tar.gz" --log-file /home/ubuntu/v2conf.log 
+sudo $(which v2conf) /home/ubuntu/confs -n 5 -s 900 --timeout-penalty 10 --ema 8,1.25 --no-geoip --country-code 'IR' --log-level error --jalali -w "https://dl-cdn.alpinelinux.org/alpine/v3.17/releases/x86/alpine-minirootfs-3.17.1-x86.tar.gz" --log-file /home/ubuntu/v2conf.log 
 ```
 With these flags and settings, V2Conf will download the selected file every 15 minutes (900 / 60 = 15) 10 times for each outbound.\
 V2Conf will print logs in Jalali date times in `/home/ubuntu/v2conf.log` and `stdout` simultaneously and it will exclude IPs for Iran. (useful for domestic Iranian VPSs) \
@@ -76,6 +76,8 @@ optional arguments:
                         Set the number of tries for checking the health of proxies, default is 10.
   --timeout-penalty TIMEOUT_PENALTY
                         Converting timeouts to latency by this factor (in seconds), DISABLED by default.
+  --freedom-tag FREEDOM_TAG
+                        Explicitly set the tag for the freedom (direct) outbound.
   --ema EMA             Instead of choosing OutBound based on latest evaluation, rank based on exponential moving average of last Nth tests and smoothing variable. (e.g. --ema 10,2.5) DISABLED by default.
   -s SLEEP_TIME, --sleep-time SLEEP_TIME
                         Set the sleep time between each checkup, default is 1,800s. (in seconds)

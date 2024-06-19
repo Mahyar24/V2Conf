@@ -181,6 +181,39 @@ def read_rules(path: Path) -> dict[str, dict]:
     return rules
 
 
+def find_freedom_tag(
+    args: argparse.Namespace, logger: logging.Logger, outbounds: dict[str, dict]
+) -> str:
+    """
+    Find the tag of the freedom outbound.
+    """
+    freedom_outbounds = {
+        k: v for k, v in outbounds.items() if v["protocol"] == "freedom"
+    }
+
+    if args.freedom_tag:
+        # Check if the freedom tag is valid.
+        if args.freedom_tag not in freedom_outbounds.keys():
+            return args.freedom_tag
+        raise ValueError(
+            f"{args.freedom_tag!r} is not found in freedom protocols outbounds!"
+        )
+
+    # Guessing the correct freedom tag.
+    # We suppose the right one is the one without `settings` field -
+    # or with minimum keys in the `settings` field.
+    freedom_tag = min(
+        freedom_outbounds,
+        key=lambda k: -1
+        if "settings" not in freedom_outbounds[k]
+        else len(freedom_outbounds[k]["settings"]),
+    )
+    logger.warning(
+        f"No freedom tag specified, guessing the correct one to be {freedom_tag!r}"
+    )
+    return freedom_tag
+
+
 def make_rules(
     path: Path,
     logger: logging.Logger,
@@ -281,8 +314,7 @@ def make_conf(
 
     logger.info(f"Read {len(outbounds)} outbounds, {len(vpn_outbounds)} vpn outbounds")
 
-    # find tag of freedom outbound, using when making first naive config file.
-    freedom = [k for k, v in outbounds.items() if v["protocol"] == "freedom"][0]
+    freedom = find_freedom_tag(args, logger, outbounds)
 
     http_inbounds = make_http_inbounds(
         vpn_outbounds,

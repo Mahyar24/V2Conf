@@ -33,7 +33,7 @@ from zoneinfo import ZoneInfo
 from .configs import make_conf, write_conf
 from .health import rank_outbounds
 
-__version__ = "0.1.6"
+__version__ = "0.1.7"
 __author__ = "Mahyar Mahdavi"
 __email__ = "Mahyar@Mahyar24.com"
 __license__ = "GPLv3"
@@ -137,7 +137,7 @@ def checking_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
         if args.ema[1] <= 0:
             parser.error("EMA second value must be a float greater than 0.")
 
-    # When args.starts_port is not default and a --stats flag is not enabled.
+    # When args.starts_port is not default and the --stats flag is not enabled.
     if args.stats_port != 10_085 and not args.stats:
         parser.error("You must enable --stats flag in order to use --stats-port flag.")
 
@@ -236,6 +236,13 @@ def parsing_args() -> argparse.Namespace:
         type=float,
         default=False,
     )
+
+    parser.add_argument(
+        "--freedom-tag",
+        help="Explicitly set the tag for the freedom (direct) outbound.",
+        type=str,
+    )
+
 
     parser.add_argument(
         "--ema",
