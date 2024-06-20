@@ -193,7 +193,7 @@ def find_freedom_tag(
 
     if args.freedom_tag:
         # Check if the freedom tag is valid.
-        if args.freedom_tag not in freedom_outbounds.keys():
+        if args.freedom_tag in freedom_outbounds.keys():
             return args.freedom_tag
         raise ValueError(
             f"{args.freedom_tag!r} is not found in freedom protocols outbounds!"
