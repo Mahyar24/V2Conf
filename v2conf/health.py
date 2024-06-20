@@ -38,7 +38,6 @@ def calculate_ema(nums: list[Union[int, float]], n_th: int, smoothing: float) ->
 
 
 async def check_health(
-    session: aiohttp.ClientSession,
     outbound_name: str,
     username: str,
     password: str,
@@ -52,30 +51,36 @@ async def check_health(
     Check the health of a proxy by pinging it and checking its latency.
     If an error or timeout happens, it will be recorded as a NaN,
     otherwise we will record the latency.
+    For some reason, the first result is biased towards previously
+    chosen outbound, and it consists of establishing the session, so we will ignore it.
     """
     result: list[float] = []
 
-    proxy_auth = aiohttp.BasicAuth(username, password)
-    for _ in range(num_of_tries):
-        start_time = time.perf_counter()
-        try:
-            async with session.get(
-                test_site, proxy=proxy, proxy_auth=proxy_auth, timeout=timeout
-            ) as resp:
-                if resp.ok:
-                    # Fetch the data chunk by chuck
-                    async for _ in resp.content.iter_chunked(2048):
-                        pass
-                    result.append(time.perf_counter() - start_time)
-                else:
-                    result.append(float("nan"))
-        except (
-            asyncio.exceptions.TimeoutError,
-            aiohttp.client_exceptions.ClientError,
-        ):
-            result.append(float("nan"))
+    async with aiohttp.ClientSession() as session:
+        proxy_auth = aiohttp.BasicAuth(username, password)
 
-    return {outbound_name: result}
+        for _ in range(num_of_tries + 1):
+            start_time = time.monotonic()
+            try:
+                async with session.get(
+                    test_site, proxy=proxy, proxy_auth=proxy_auth, timeout=timeout
+                ) as resp:
+                    if resp.ok:
+                        # Fetch the data chunk by chuck
+                        async for _ in resp.content.iter_chunked(2048):
+                            pass
+                        result.append(time.monotonic() - start_time)
+                    else:
+                        result.append(float("nan"))
+            except (
+                asyncio.exceptions.TimeoutError,
+                aiohttp.client_exceptions.ClientError,
+            ):
+                result.append(float("nan"))
+
+            await asyncio.sleep(5)
+
+    return {outbound_name: result[1:]}
 
 
 def calculate(results: list[float]) -> tuple[int, float]:
@@ -170,23 +175,21 @@ async def rank_outbounds(
     """
     coroutines = []
 
-    async with aiohttp.ClientSession() as session:
-        for http_inbound in http_inbounds:
-            coroutines.append(
-                asyncio.create_task(
-                    check_health(
-                        session,
-                        http_inbound["tag"].split("-")[-1],
-                        http_inbound["accounts"][0]["user"],
-                        http_inbound["accounts"][0]["pass"],
-                        f"http://{http_inbound['listen']}:{http_inbound['port']}",
-                        args.website,
-                        num_of_tries=args.num_of_tries,
-                        timeout=args.timeout,
-                    )
+    for http_inbound in http_inbounds:
+        coroutines.append(
+            asyncio.create_task(
+                check_health(
+                    http_inbound["tag"].split("-")[-1],
+                    http_inbound["accounts"][0]["user"],
+                    http_inbound["accounts"][0]["pass"],
+                    f"http://{http_inbound['listen']}:{http_inbound['port']}",
+                    args.website,
+                    num_of_tries=args.num_of_tries,
+                    timeout=args.timeout,
                 )
             )
-        results = dict(ChainMap(*await asyncio.gather(*coroutines)))
+        )
+    results = dict(ChainMap(*await asyncio.gather(*coroutines)))
 
     results = {k: calculate(v) for k, v in results.items()}
     logger.info(f"Results: {results}")
