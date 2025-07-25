@@ -35,6 +35,7 @@ confs/
 └── rules  # a "rules" directory
     ├── ir.json
     └── private.json
+
 ```
 where each inbound, outbound or rule should be saved as a json file (*.json).
 e.g. `main_entry.json`:
@@ -46,15 +47,20 @@ e.g. `main_entry.json`:
     "clients":
     ...
 ```
-and **all configs must have a tag!**
+and **all configs must have a tag!** 
+
+Additionally, you can have a `reverse` directory for reverse proxy configurations, which is not mandatory.
+
 P.S.: Thanks to [Tushar](https://github.com/Mahyar24/V2Conf/pull/2) V2Conf now supports JSON5 format for configs.
 
 
 ## Usage
 ```
-usage: v2conf [-h] [-c CONFIG_FILE] [-p PROCESS_NAME] [--country-code COUNTRY_CODE] [--no-geoip] [-t TIMEOUT] [-w WEBSITE] [-n NUM_OF_TRIES] [--timeout-penalty TIMEOUT_PENALTY] [--ema EMA] [-s SLEEP_TIME]
-                   [-l {debug,info,warning,error,none}] [-q | --log-file LOG_FILE] [--jalali] [--stats] [--stats-port STATS_PORT] [--sys-only | --users-only] [-v]
-                   [path_conf_dir]
+usage: v2conf [-h] [-c CONFIG_FILE] [-p PROCESS_NAME] [--country-code COUNTRY_CODE] [--no-geoip] [-t TIMEOUT] [-w WEBSITE] [-n NUM_OF_TRIES]
+              [--timeout-penalty TIMEOUT_PENALTY] [--freedom-tag FREEDOM_TAG] [--default-outbound DEFAULT_OUTBOUND] [--use-default-when-all-down]
+              [--backup-outbounds BACKUP_OUTBOUNDS] [--ema EMA] [-s SLEEP_TIME] [-l {debug,info,warning,error,none}] [-q | --log-file LOG_FILE]
+              [--jalali] [--stats] [--stats-port STATS_PORT] [--sys-only | --users-only] [-v]
+              [path_conf_dir]
 
 positional arguments:
   path_conf_dir         Select configuration directory, default is $PWD.
@@ -64,7 +70,8 @@ optional arguments:
   -c CONFIG_FILE, --config-file CONFIG_FILE
                         Select configuration file, default is '/usr/local/etc/v2ray/config.json'.
   -p PROCESS_NAME, --process-name PROCESS_NAME
-                        Select the process name, default is 'v2ray'. If you are using 'xray' set it here and in the custom config file path in '-c' flag.
+                        Select the process name, default is 'v2ray'. If you are using 'xray' set it here and in the custom config file path in '-c'
+                        flag.
   --country-code COUNTRY_CODE
                         Exclude a country from the list of IPs to be routed; default is 'IR'. (ISO 3166-1 alpha-2)
   --no-geoip            Instead of using V2Ray GeoIP database, downloading IPs from 'ripe.net' (more recent IPs but may slow V2Ray)
@@ -78,7 +85,14 @@ optional arguments:
                         Converting timeouts to latency by this factor (in seconds), DISABLED by default.
   --freedom-tag FREEDOM_TAG
                         Explicitly set the tag for the freedom (direct) outbound.
-  --ema EMA             Instead of choosing OutBound based on latest evaluation, rank based on exponential moving average of last Nth tests and smoothing variable. (e.g. --ema 10,2.5) DISABLED by default.
+  --default-outbound DEFAULT_OUTBOUND
+                        Default outbound to use for first configuration file.
+  --use-default-when-all-down
+                        If all outbounds are down, use the default outbound instead of the first ranked outbound.
+  --backup-outbounds BACKUP_OUTBOUNDS
+                        Choosing a list of outbounds to be only used as backups in case of other outbounds failure.
+  --ema EMA             Instead of choosing OutBound based on latest evaluation, rank based on exponential moving average of last Nth tests and
+                        smoothing variable. (e.g. --ema 10,2.5) DISABLED by default.
   -s SLEEP_TIME, --sleep-time SLEEP_TIME
                         Set the sleep time between each checkup, default is 1,800s. (in seconds)
   -l {debug,info,warning,error,none}, --log-level {debug,info,warning,error,none}
@@ -93,7 +107,8 @@ optional arguments:
   --users-only          Only users traffic statistics
   -v, --version         Show version and exit.
 
-Written by: Mahyar Mahdavi <Mahyar@Mahyar24.com>. License: GNU GPLv3. Source Code: <https://github.com/mahyar24/V2Conf>. Reporting Bugs and PRs are welcomed. :)
+Written by: Mahyar Mahdavi <Mahyar@Mahyar24.com>. License: GNU GPLv3. Source Code: <https://github.com/mahyar24/V2Conf>. Reporting Bugs and PRs are
+welcomed. :)
 
 ```
 ## More Tools

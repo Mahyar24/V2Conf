@@ -33,7 +33,7 @@ from zoneinfo import ZoneInfo
 from .configs import make_conf, write_conf
 from .health import rank_outbounds
 
-__version__ = "0.1.9"
+__version__ = "0.2.0"
 __author__ = "Mahyar Mahdavi"
 __email__ = "Mahyar@Mahyar24.com"
 __license__ = "GPLv3"
@@ -146,6 +146,11 @@ def checking_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
             "You must enable --stats flag in order to use --sys-only or --users-only flags."
         )
 
+    if args.use_default_when_all_down and not args.default_outbound:
+        parser.error(
+            "You must set --default-outbound when using --use-default-when-all-down."
+        )
+
     return args
 
 
@@ -243,6 +248,28 @@ def parsing_args() -> argparse.Namespace:
         type=str,
     )
 
+    parser.add_argument(
+        "--default-outbound",
+        help="Default outbound to use for first configuration file.",
+        type=str,
+        default=None,
+    )
+
+    # mandate that default must have been set already:
+    parser.add_argument(
+        "--use-default-when-all-down",
+        help="If all outbounds are down, use the default outbound"
+        " instead of the first ranked outbound.",
+        action="store_true",
+    )
+
+    parser.add_argument(
+        "--backup-outbounds",
+        help="Choosing a list of outbounds to be only used as"
+        " backups in case of other outbounds failure.",
+        type=lambda x: tuple(set(map(str, x.split(",")))),
+        default=tuple(),
+    )
 
     parser.add_argument(
         "--ema",
@@ -328,6 +355,56 @@ def restart_v2ray(logger: logging.Logger, process_name: str = "v2ray") -> None:
     logger.warning(f"V2Ray ({process_name}) is restarted")
 
 
+def choose_outbound(
+    ranked_outbounds: list[str],
+    historical_results: list[dict[str, tuple[int, float]]],
+    args: argparse.Namespace,
+    logger: logging.Logger,
+) -> str:
+    """
+    if no backup outbounds are specified, return the best outbound,
+    otherwise, if all other outbounds are down, return the best backup outbound.
+    """
+    latest_results = historical_results[-1]
+    # If the number of failures for all outbounds are equal to the number of tries,
+    # Then all outbounds are down.
+    if args.use_default_when_all_down and (
+        min(v[0] for v in latest_results.values()) == args.num_of_tries
+    ):
+        logger.warning(
+            f"All outbounds are down, using the default outbound: {args.default_outbound!r}"
+        )
+        return args.default_outbound
+
+    if not args.backup_outbounds:
+        return ranked_outbounds[0]
+
+    # if all non-backup outbounds are down, return the best backup outbound.
+    if (
+        min(v[0] for k, v in latest_results.items() if k not in args.backup_outbounds)
+        == args.num_of_tries
+    ):
+        # Filter out the backup outbounds from the ranked outbounds.
+        backup_outbounds = [
+            outbound
+            for outbound in ranked_outbounds
+            if outbound in args.backup_outbounds
+        ]
+        logger.warning(
+            f"All non-backup outbounds are down, using "
+            f"the best backup outbound: {backup_outbounds[0]!r}"
+        )
+        return backup_outbounds[0]
+    # If all non-backup outbounds are not down, return the best non-backup outbound.
+    return [
+        outbound
+        for outbound in ranked_outbounds
+        if outbound not in args.backup_outbounds
+    ][0]
+
+    # Check to see
+
+
 def main() -> None:
     """
     Main function.
@@ -342,7 +419,11 @@ def main() -> None:
 
     # At the first run, we will make a naive configuration file.
     # And all inbounds will route to a randomly selected outbound.
-    conf = make_conf(args, logger)
+    if args.default_outbound:
+        logger.info(f"Using the default outbound: {args.default_outbound!r}")
+    # If the user did not specify a default outbound, args.default_outbound will be None.
+    # If so, we will use a random outbound.
+    conf = make_conf(args, logger, outbound_tag=args.default_outbound)
     write_conf(args.config_file, conf)
     logger.info("Naive configuration file is written")
 
@@ -374,15 +455,18 @@ def main() -> None:
         )
 
         # Change and restart if new outbound is different, or we're cold starting.
-        if previous_outbound is None or ranked_outbounds[0] != previous_outbound:
+        chosen_outbound = choose_outbound(
+            ranked_outbounds, historical_results, args, logger
+        )
+        if previous_outbound is None or chosen_outbound != previous_outbound:
             # Make the new configuration file and set all inbounds to the best inbound.
-            conf = make_conf(args, logger, ranked_outbounds[0])
+            conf = make_conf(args, logger, chosen_outbound)
             # Write the new configuration file.
             write_conf(args.config_file, conf)
             logger.info("New configuration file is written")
             # Restarting to apply the new configuration file.
             restart_v2ray(logger, args.process_name)
-            previous_outbound = ranked_outbounds[0]
+            previous_outbound = chosen_outbound
         else:
             logger.info(f"Keeping same configurations ({previous_outbound})")
 

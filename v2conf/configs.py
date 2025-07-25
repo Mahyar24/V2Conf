@@ -181,6 +181,56 @@ def read_rules(path: Path) -> dict[str, dict]:
     return rules
 
 
+def read_reverses(path: Path) -> tuple[dict[str, list[dict]], list[str]]:
+    """
+    Reading reverse configs from the path.
+    """
+    reverse_path = path / "reverse"
+
+    portals = []
+    bridges = []
+    portal_tags = []
+
+    reverse_conf: dict[str, list[dict]] = {}
+
+    if not reverse_path.is_dir():
+        return reverse_conf, []
+
+    for config in reverse_path.glob("*.json"):
+        with open(config, "r", encoding="utf-8") as file:
+            data = read_json5_file(file)
+
+        data_portals = data.get("portals", [])
+        bridge_portals = data.get("bridges", [])
+        if data_portals:
+            portals.extend(data_portals)
+        if bridge_portals:
+            bridges.extend(bridge_portals)
+
+        if not portals and not bridges:
+            raise ValueError(f"No portals or bridges found in {config.name!r}")
+
+        for portal in data_portals:
+            try:
+                tag = portal["tag"]
+            except KeyError as err:
+                raise KeyError(f"Tag not found in {config.name!r}") from err
+            else:
+                if tag in portal_tags:
+                    raise ValueError(
+                        f"Duplicated portal tags; {tag!r} already exist!"
+                        f" Change the tag in {config.name!r}"
+                    )
+                portal_tags.append(tag)
+
+    if portals:
+        reverse_conf["portals"] = portals
+    if bridges:
+        reverse_conf["bridges"] = bridges
+
+    return reverse_conf, portal_tags
+
+
 def find_freedom_tag(
     args: argparse.Namespace, logger: logging.Logger, outbounds: dict[str, dict]
 ) -> str:
@@ -204,9 +254,11 @@ def find_freedom_tag(
     # or with minimum keys in the `settings` field.
     freedom_tag = min(
         freedom_outbounds,
-        key=lambda k: -1
-        if "settings" not in freedom_outbounds[k]
-        else len(freedom_outbounds[k]["settings"]),
+        key=lambda k: (
+            -1
+            if "settings" not in freedom_outbounds[k]
+            else len(freedom_outbounds[k]["settings"])
+        ),
     )
     logger.warning(
         f"No freedom tag specified, guessing the correct one to be {freedom_tag!r}"
@@ -302,17 +354,59 @@ def make_conf(
         )
 
     outbounds = read_outbounds(args.path_conf_dir)
+    reverses_conf, portal_tags = read_reverses(args.path_conf_dir)
+
+    if reverses_conf:
+        # Adding logger info for reverses, but maybe portals or bridges keys are non-existent.
+        num_portals = 0
+        num_bridges = 0
+
+        if "portals" in reverses_conf:
+            num_portals = len(reverses_conf["portals"])
+        if "bridges" in reverses_conf:
+            num_bridges = len(reverses_conf["bridges"])
+        logger.info(
+            f"Read reverses, {num_bridges} bridges and {num_portals} portals found"
+        )
 
     # We should only make http inbounds for the outbounds that are not freedom or blackhole.
     vpn_outbounds = [
         k for k, v in outbounds.items() if v["protocol"] not in ("freedom", "blackhole")
     ]
+    # Check to see if any tags are in both `vpn_outbounds` and `portal_tags`.
+    if portal_tags:
+        duplicates = list(set(portal_tags) & set(vpn_outbounds))
+        if duplicates:
+            raise ValueError(f"Duplicated outbound tags found: {duplicates!r}")
+        vpn_outbounds.extend(portal_tags)
+
+    if outbound_tag not in vpn_outbounds:
+        raise ValueError(
+            f"{outbound_tag!r} is not found in vpn outbounds! "
+            "Please specify a valid outbound tag."
+        )
+    if args.backup_outbounds:
+        for backup in args.backup_outbounds:
+            if backup not in vpn_outbounds:
+                raise ValueError(
+                    f"{backup!r} is not found in vpn outbounds! "
+                    "Please specify a valid backup outbound tag."
+                )
+
     if len(vpn_outbounds) < 2:
         raise ValueError(
             "At least two non-freedom/non-blackhole outbounds are required!"
         )
+    if len(vpn_outbounds) - len(args.backup_outbounds) < 1:
+        raise ValueError(
+            "At least one non-freedom/non-blackhole outbound"
+            " is required to also not be in backup outbounds!"
+        )
 
-    logger.info(f"Read {len(outbounds)} outbounds, {len(vpn_outbounds)} vpn outbounds")
+    logger.info(
+        f"Read {len(outbounds)} outbounds, {len(vpn_outbounds)} vpn outbounds,"
+        f" {len(args.backup_outbounds)} backup outbounds"
+    )
 
     freedom = find_freedom_tag(args, logger, outbounds)
 
@@ -347,6 +441,8 @@ def make_conf(
         "outbounds": list(outbounds.values()),
         "routing": {"domainStrategy": "UseIPv4", "rules": rules},
     }
+    if reverses_conf:
+        conf = conf | {"reverse": reverses_conf}
 
     if args.stats:
         conf["stats"] = {}
